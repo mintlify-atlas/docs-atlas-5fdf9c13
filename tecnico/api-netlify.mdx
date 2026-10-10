@@ -1,14 +1,14 @@
 ---
-title: "API del servidor: Netlify Function para catálogo y autenticación"
+title: "API del servidor: función pruebas.js y autenticación"
 sidebarTitle: "API del Servidor"
-description: "Referencia de los endpoints de la Netlify Function pruebas.js: leer catálogo, guardar cambios y autenticación por contraseña."
+description: "Referencia de la Netlify Function pruebas.js: endpoints GET y POST, autenticación por contraseña, integración con GitHub y uso desde Datos."
 ---
 
 Toda la comunicación entre el navegador y los datos almacenados en GitHub pasa por una única Netlify Function: `pruebas.js`. Esta función actúa como intermediaria segura — expone dos endpoints HTTP (GET y POST) bajo la ruta `/.netlify/functions/pruebas`, protege el acceso con una contraseña configurada como variable de entorno, y lee o escribe los archivos del catálogo (`areas.json`, `cargos.json`, `dinamicas.json`) directamente sobre el repositorio `FABIOR1981/bd` a través de la API de contenidos de GitHub. El código del cliente que invoca estos endpoints vive en `datos/datos.js` como el objeto singleton `Datos`, que gestiona de forma automática la solicitud y reintento de contraseña ante respuestas `401`.
 
 ## URL base
 
-```
+```text
 /.netlify/functions/pruebas
 ```
 
@@ -21,7 +21,7 @@ Todos los endpoints descritos en esta página son rutas relativas a esa base. En
 Cada petición — tanto de lectura como de escritura — debe incluir la contraseña correcta. La función la compara con la variable de entorno `CLAVE_PRUEBAS` usando `crypto.timingSafeEqual`, que evita ataques de temporización.
 
 <Warning>
-Si la variable de entorno `CLAVE_PRUEBAS` **no está configurada** en el panel de Netlify, **todos** los endpoints devuelven `500` inmediatamente, independientemente de la contraseña enviada.
+Si la variable de entorno `CLAVE_PRUEBAS` **no está configurada** en el panel de Netlify, **todos** los endpoints devuelven `500` inmediatamente con el mensaje `"El servidor no tiene configurada la contraseña."`, independientemente de la contraseña enviada.
 </Warning>
 
 ### Cómo enviar la contraseña
@@ -120,7 +120,7 @@ X-Clave: <contraseña>
 |--------|-------------|
 | `200`  | Catálogo devuelto correctamente |
 | `401`  | Contraseña inválida o ausente |
-| `404`  | Uno o más archivos JSON faltan en el repositorio `bd` |
+| `404`  | Uno o más archivos faltan en el repositorio: `"Faltan archivos en la base de datos."` |
 | `500`  | Error de configuración del servidor o fallo en la API de GitHub |
 
 ---
@@ -173,7 +173,7 @@ Content-Type: application/json
   - `cargos` — objeto (no array, no null)
   - `dinamicas` — array
 
-  Si cualquiera de estos campos falta o tiene el tipo incorrecto, la función devuelve `400`.
+  Si cualquiera de estos campos falta o tiene el tipo incorrecto, la función devuelve `400` con `"Datos inválidos"`.
 </ParamField>
 
 ### Respuesta exitosa `200`
@@ -198,12 +198,13 @@ Content-Type: application/json
 | Código | Descripción |
 |--------|-------------|
 | `200`  | Guardado completado (puede incluir cero escrituras si nada cambió) |
-| `400`  | Estructura de `base` inválida |
+| `400`  | Estructura de `base` inválida: `"Datos inválidos"` |
 | `401`  | Contraseña incorrecta |
+| `405`  | Método HTTP distinto de GET o POST: `"Método no permitido"` |
 | `500`  | `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` no configurado, o error en la API de GitHub |
 
 <Note>
-Para poder guardar, el servidor necesita **dos** variables de entorno: `CLAVE_PRUEBAS` (contraseña de la app) y `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` (Personal Access Token con permiso de escritura sobre `FABIOR1981/bd`). La ausencia de cualquiera de las dos produce un `500`.
+Para poder guardar, el servidor necesita **dos** variables de entorno: `CLAVE_PRUEBAS` (contraseña de la app) y `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` (Personal Access Token con permiso de escritura sobre `FABIOR1981/bd`). La ausencia de `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` produce un `500` con `"El servidor no tiene configurado el guardado."` únicamente en escrituras (POST); las lecturas (GET) no la requieren.
 </Note>
 
 ---
@@ -216,7 +217,7 @@ Todos los errores, sin excepción, devuelven un objeto JSON con la clave `error`
 { "error": "Descripción del problema." }
 ```
 
-El código HTTP del error indica la categoría (`400` datos inválidos, `401` autenticación, `404` recurso no encontrado, `500` servidor).
+El código HTTP del error indica la categoría (`400` datos inválidos, `401` autenticación, `404` recurso no encontrado, `405` método no permitido, `500` servidor).
 
 ---
 
@@ -243,7 +244,7 @@ La función se comunica directamente con la [API de contenidos de GitHub](https:
 | `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` | Personal Access Token con acceso de escritura a `FABIOR1981/bd` |
 
 <Warning>
-Si dos usuarios guardan el catálogo exactamente al mismo tiempo, el segundo PUT puede fallar con `409` porque el `sha` quedó desactualizado tras el primer guardado. En ese caso la función devuelve `500` con el mensaje de GitHub. La solución es recargar y volver a aplicar los cambios.
+Si dos usuarios guardan el catálogo exactamente al mismo tiempo, el segundo PUT puede fallar con `409` porque el `sha` quedó desactualizado tras el primer guardado. En ese caso la función devuelve `500` con un mensaje de error propio (p. ej. `"No se pudo guardar areas.json (error 409)."`). La solución es recargar y volver a aplicar los cambios.
 </Warning>
 
 ---
@@ -263,13 +264,21 @@ const base = await Datos.cargar();
 // base.dinamicas → array de dinámicas
 ```
 
-### `Datos.guardar(base, clave)`
+### `Datos.guardar(base, claveIngresada)`
 
 Llama a `POST /.netlify/functions/pruebas` con el cuerpo `{ clave, base }`. Devuelve la respuesta `{ ok, escritos }`.
 
 ```js
 const resultado = await Datos.guardar(base, claveIngresada);
 // resultado.escritos → ['areas', 'dinamicas'] (solo los archivos que cambiaron)
+```
+
+### `Datos.origen`
+
+Getter de solo lectura que devuelve `'bd'` una vez que el catálogo fue cargado o guardado exitosamente desde el servidor.
+
+```js
+console.log(Datos.origen); // 'bd'
 ```
 
 ### Manejo automático de contraseña incorrecta

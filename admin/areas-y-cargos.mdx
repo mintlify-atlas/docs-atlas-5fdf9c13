@@ -1,17 +1,17 @@
 ---
-title: "Crear y gestionar áreas y cargos en el Panel de Administración"
+title: "Crear áreas y cargos en el Panel de Administración"
 sidebarTitle: "Áreas y Cargos"
-description: "Aprende a crear áreas organizativas y cargos desde el Panel de Administración, con sus siglas, códigos autogenerados y competencias."
+description: "Crea áreas organizativas y cargos desde el panel: siglas, códigos autogenerados, edición de nombre y competencias, y bajas lógicas."
 ---
 
-El Panel de Administración es el lugar donde se mantiene el catálogo de la herramienta: las **áreas** organizativas, los **cargos** que pertenecen a cada área y las dinámicas que se aplican en cada evaluación. Las áreas y los cargos son la estructura base de todo el sistema — sin ellos no puede haber dinámicas ni evaluaciones. Esta página explica cómo crearlos correctamente, qué códigos genera la herramienta en forma automática y cuáles son las operaciones que todavía requieren edición manual de los archivos JSON.
+El Panel de Administración es el lugar donde se mantiene el catálogo de la herramienta: las **áreas** organizativas, los **cargos** que pertenecen a cada área y las dinámicas que se aplican en cada evaluación. Las áreas y los cargos son la estructura base de todo el sistema — sin ellos no puede haber dinámicas ni evaluaciones. Esta página explica cómo crearlos y editarlos correctamente, qué códigos genera la herramienta en forma automática y cuáles son las operaciones que todavía requieren edición manual de los archivos JSON.
 
 ## Acceder al Panel de Administración
 
 Desde la pantalla principal del Generador de Evaluaciones, presione el botón **⚙️ Administrar Datos** que aparece en la parte superior. Para regresar al generador en cualquier momento, presione **⬅️ Volver al Generador**.
 
 <Warning>
-Todo lo que agregue o cambie en el Panel de Administración se guarda **únicamente en la memoria del navegador**. Si recarga la página o cierra la pestaña antes de exportar o guardar los cambios, **se pierde todo**. Al terminar de trabajar, siga siempre los pasos de la sección [Guardar Cambios](/admin/guardar-cambios).
+Todo lo que agregue o cambie en el Panel de Administración se guarda **únicamente en la memoria del navegador**. Si recarga la página o cierra la pestaña antes de guardar los cambios, **se pierde todo**. Al terminar de trabajar, siga siempre los pasos de la sección [Guardar Cambios](/admin/guardar-cambios).
 </Warning>
 
 ---
@@ -31,13 +31,23 @@ Las **áreas** representan los sectores de la organización (por ejemplo, Operat
     Escriba una **sigla de exactamente 3 letras**, por ejemplo: `TEC`. La herramienta la convierte a mayúsculas automáticamente. La sigla debe ser única — si ya existe un área con esa sigla, el sistema mostrará un error.
   </Step>
   <Step title="Guardar">
-    Presione **Guardar Área**. El área nueva aparecerá de inmediato en la lista.
+    Presione **Crear área**. El área nueva aparecerá de inmediato en la lista.
   </Step>
 </Steps>
 
 ### Código del área
 
 El código de un área es simplemente su **sigla de 3 letras** (p. ej. `TEC`). Este valor se usa como componente en los códigos de cargos y dinámicas, pero el área en sí no tiene un código adicional.
+
+---
+
+## Editar un área existente
+
+Para cambiar el **nombre** de un área, presione el botón **✏️ Editar** en la tarjeta del área. Se abrirá el formulario con el nombre actual. Al guardar, el sistema actualiza automáticamente el campo `area` de todos los cargos que referenciaban el nombre anterior.
+
+<Note>
+La **sigla** (clave del área) no puede modificarse desde el panel — el campo aparece como solo lectura al editar. Si necesita cambiar la sigla, deberá editar `areas.json` y `cargos.json` directamente.
+</Note>
 
 ---
 
@@ -58,8 +68,11 @@ Los **cargos** son los puestos a los que se puede postular (por ejemplo, Adminis
   <Step title="Ingresar la sigla de especialidad">
     Escriba una sigla de **hasta 3 letras** que identifique la especialidad dentro del área, por ejemplo: `DEV`. Si ingresa menos de 3 letras, la herramienta completa con `X` (p. ej., `DE` → `DEX`).
   </Step>
+  <Step title="Definir las competencias">
+    Complete las filas de competencias que aparecen en el formulario. Cada fila tiene un código (opcional, se asigna automáticamente si se deja vacío), el nombre de la competencia y una descripción de qué se observa. Use el botón **+ Agregar competencia** para añadir más filas.
+  </Step>
   <Step title="Crear el cargo">
-    Presione **Crear Cargo**. El código se genera solo.
+    Presione **Crear cargo**. El código se genera solo.
   </Step>
 </Steps>
 
@@ -71,7 +84,7 @@ El código sigue el patrón `CAR-<área>-<esp>-<NN>`, donde:
 |---|---|---|
 | `CAR` | Prefijo fijo para todos los cargos | `CAR` |
 | `<área>` | Sigla de 3 letras del área | `TEC` |
-| `<esp>` | Sigla de especialidad de hasta 3 letras | `DEV` |
+| `<esp>` | Sigla de especialidad de hasta 3 letras, completada con `X` | `DEV` |
 | `<NN>` | Número correlativo de 2 dígitos, calculado automáticamente | `01` |
 
 Por ejemplo, el primer cargo de especialidad `DEV` en el área `TEC` recibirá el código `CAR-TEC-DEV-01`. Si ya existiera ese código, el siguiente sería `CAR-TEC-DEV-02`.
@@ -82,7 +95,27 @@ El número `NN` se calcula tomando el mayor número existente con el mismo prefi
 
 ### Competencias del cargo nuevo
 
-Todo cargo creado desde el panel se genera con **dos competencias de ejemplo**. Estas competencias definen las columnas de la tabla de puntaje en las evaluaciones. Para reemplazarlas por las competencias reales del puesto, es necesario editar el archivo `cargos.json` directamente — esta es una tarea del administrador técnico.
+Las competencias se definen directamente en el formulario de creación del cargo. Definen las columnas de la tabla de puntaje en las evaluaciones. Al crear un cargo nuevo, el formulario muestra tres filas vacías como punto de partida; puede eliminar filas o agregar más con **+ Agregar competencia**. Debe haber al menos una competencia para poder guardar.
+
+---
+
+## Editar un cargo existente
+
+Para modificar el **nombre** del cargo o sus **competencias**, presione el botón **✏️ Editar** en la tarjeta del cargo. Se abrirá el formulario con los datos actuales. El código del cargo se muestra como referencia pero no puede modificarse desde aquí.
+
+<Warning>
+No puede quitar ni cambiar el código de una competencia que ya está marcada en alguna dinámica del cargo. El sistema mostrará un error e indicará cuáles dinámicas la usan. Para poder quitarla, primero desmárquela en esas dinámicas.
+</Warning>
+
+---
+
+## Dar de baja un área o cargo
+
+Si un área o cargo ya no debe aparecer en el generador, puede darlo de baja sin eliminarlo permanentemente. Presione el botón **⏻ Dar de baja** en la tarjeta correspondiente y confirme la operación. El elemento pasa al estado **Inactivo** y deja de mostrarse en el generador, pero puede **reactivarse** en cualquier momento con el botón **↺ Reactivar**.
+
+<Note>
+Dar de baja un área desactiva también todos los cargos activos del área y sus dinámicas en el generador. Ningún dato se elimina de forma permanente: todo queda accesible en la vista **Inactivos** del panel.
+</Note>
 
 ---
 
@@ -94,14 +127,16 @@ Algunas operaciones no están disponibles desde la interfaz del panel y requiere
 |---|---|---|
 | Crear un área nueva | ✅ Sí | — |
 | Crear un cargo nuevo | ✅ Sí | — |
+| Renombrar un área existente | ✅ Sí (botón ✏️ Editar) | — |
+| Renombrar un cargo existente | ✅ Sí (botón ✏️ Editar) | — |
+| Definir o modificar competencias de un cargo | ✅ Sí (botón ✏️ Editar cargo) | — |
 | Crear y editar dinámicas | ✅ Sí | — |
-| Definir o modificar competencias de un cargo | ❌ No | Editar `cargos.json` manualmente |
-| Renombrar un área existente | ❌ No | Editar `areas.json` manualmente |
-| Eliminar un área existente | ❌ No | Editar `areas.json` manualmente |
-| Renombrar un cargo existente | ❌ No | Editar `cargos.json` manualmente |
-| Eliminar un cargo existente | ❌ No | Editar `cargos.json` manualmente |
+| Dar de baja un área o cargo (desactivar) | ✅ Sí (botón ⏻) | — |
+| Cambiar la sigla de un área | ❌ No | Editar `areas.json` y `cargos.json` manualmente |
+| Eliminar definitivamente un área | ❌ No | Editar `areas.json` manualmente |
+| Eliminar definitivamente un cargo | ❌ No | Editar `cargos.json` manualmente |
 | Corregir el `cargo_id` de una dinámica | ❌ No | Editar `dinamicas.json` manualmente |
 
 <Note>
-Las operaciones de renombrado y eliminación de áreas y cargos existentes deben realizarlas el **administrador técnico** editando directamente los archivos JSON en la carpeta `datos/` del repositorio. Consulte el Manual Técnico para más detalles.
+La eliminación permanente de áreas y cargos, y el cambio de sigla de un área, deben realizarlas el **administrador técnico** editando directamente los archivos JSON en la carpeta `datos/` del repositorio. Consulte el Manual Técnico para más detalles.
 </Note>

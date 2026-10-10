@@ -1,7 +1,7 @@
 ---
 title: "Variables de entorno del Gestor de Pruebas para Llamados"
 sidebarTitle: "Variables de Entorno"
-description: "Referencia de las dos variables de entorno requeridas en Netlify: GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD y CLAVE_PRUEBAS."
+description: "Referencia completa de CLAVE_PRUEBAS y GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD: qué controlan, qué errores producen si faltan y cómo configurarlas en Netlify."
 ---
 
 La función serverless `netlify/functions/pruebas.js` es el único componente del Gestor de Pruebas que se ejecuta fuera del navegador. Para operar, requiere exactamente dos variables de entorno: una contraseña que protege todos los accesos a la API, y un token de GitHub que permite leer y escribir los catálogos en el repositorio `bd`. Sin estas variables correctamente configuradas, la aplicación no puede cargar ni guardar datos, independientemente de cómo esté desplegada.

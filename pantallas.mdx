@@ -1,5 +1,5 @@
 ---
-title: "Pantallas del Gestor de Pruebas para Llamados"
+title: "Las dos pantallas del Gestor de Pruebas para Llamados"
 sidebarTitle: "Pantallas"
 description: "Descripción de las dos pantallas principales: el Generador de Evaluaciones y el Panel de Administración, y cómo navegar entre ellas."
 ---
@@ -29,20 +29,23 @@ El Generador es la pantalla que utilizan los evaluadores y psicólogos en su tra
 **Flujo habitual de uso:**
 
 <Steps>
+  <Step title="Elegir el área">
+    En el selector **Área**, elige el sector de la organización al que pertenece el cargo del llamado. Solo aparecen las áreas con cargos activos en el catálogo.
+  </Step>
   <Step title="Elegir el cargo">
-    En el selector **Puesto / Cargo**, elige el cargo del llamado. La lista muestra solo los cargos disponibles en el catálogo.
+    En el selector **Cargo**, elige el puesto. La lista muestra únicamente los cargos del área seleccionada, con la cantidad de dinámicas y competencias disponibles.
   </Step>
   <Step title="Indicar la cantidad de postulantes">
-    En el campo **Postulantes**, escribe cuántos candidatos vas a evaluar (de 1 a 10). Se generará una tabla de puntaje y un juego de hojas de trabajo para cada uno.
+    Con los botones **−** y **+** junto a **Postulantes**, ajusta cuántos candidatos vas a evaluar (de 1 a 10). Se generará una tabla de puntaje y un juego de hojas de trabajo para cada uno.
   </Step>
   <Step title="Seleccionar las dinámicas">
     En **Dinámicas a aplicar**, marca las pruebas que usarás. Aparecen solo las del cargo elegido. Si seleccionas más de una, se muestra el **tiempo total estimado** de la sesión.
   </Step>
-  <Step title="Generar el formulario">
-    Presiona **Generar Formulario**. El material completo aparece debajo: informe para el evaluador, tabla de puntaje y hojas de trabajo.
+  <Step title="Generar el informe">
+    Presiona **Generar informe**. El panel lateral muestra las dinámicas seleccionadas y el tiempo estimado; al confirmar, se abre la vista previa del material completo: informe para el evaluador, tabla de puntaje y hojas de trabajo.
   </Step>
   <Step title="Imprimir o guardar en PDF">
-    Presiona **Imprimir Formulario**. La ventana de impresión del navegador se abre con el material listo para imprimir en A4 o guardar como PDF.
+    En la vista previa, presiona **Imprimir A4**. La ventana de impresión del navegador se abre con el material listo para imprimir en A4 o guardar como PDF.
   </Step>
 </Steps>
 
@@ -82,19 +85,23 @@ En la parte superior del Panel aparece el indicador **Estado**:
 
 ### Guardar los cambios
 
-Los cambios realizados en el Panel **no se guardan automáticamente**. Para publicarlos:
+Los cambios realizados en el Panel **no se guardan automáticamente**. Para publicarlos, usa el botón **Guardar** del panel lateral:
 
 <Steps>
-  <Step title="Descargar los archivos JSON">
-    Presiona **📥 Descargar JSON Actualizado**. El navegador descargará tres archivos: `areas.json`, `cargos.json` y `dinamicas.json`. Si el navegador pregunta si permite descargar varios archivos, acepta.
+  <Step title="Presionar Guardar">
+    Haz clic en el botón **Guardar** del panel de cambios pendientes. Se abrirá un cuadro de confirmación.
   </Step>
-  <Step title="Enviar al responsable técnico">
-    Entrega los tres archivos al responsable técnico para que los publique en el repositorio `bd`. Recién entonces los cambios estarán disponibles para todos los usuarios.
+  <Step title="Ingresar la contraseña">
+    Escribe la contraseña de administración (`CLAVE_PRUEBAS`) y presiona **Guardar**. La función de Netlify escribe los archivos `areas.json`, `cargos.json` y `dinamicas.json` directamente en el repositorio `bd/pruebas_llamados/` de GitHub.
   </Step>
 </Steps>
 
+<Note>
+  Para más detalles sobre el proceso de guardado —incluyendo la exportación manual de JSON como alternativa cuando la función de Netlify no está disponible— consultá la sección [Guardar Cambios](/admin/guardar-cambios).
+</Note>
+
 <Warning>
-  El Panel de Administración trabaja **en memoria**. Todo lo que agregues, edites o borres en esta sesión existe únicamente en el navegador. Si recargas la página o la cierras **antes** de usar **Descargar JSON Actualizado**, los cambios se pierden sin posibilidad de recuperación. Descarga siempre los archivos JSON antes de cerrar o recargar el panel.
+  El Panel de Administración trabaja **en memoria**. Todo lo que agregues, edites o borres en esta sesión existe únicamente en el navegador. Si recargas la página o la cierras **antes** de presionar **Guardar**, los cambios se pierden sin posibilidad de recuperación. Completá siempre el proceso de guardado antes de cerrar o recargar el panel.
 </Warning>
 
 ## Comparación de uso cotidiano vs. administrativo
@@ -104,8 +111,8 @@ Los cambios realizados en el Panel **no se guardan automáticamente**. Para publ
 | **Frecuencia de uso** | Diario, en cada proceso de selección. | Ocasional, cuando se agrega o modifica el catálogo. |
 | **Quién lo usa** | Evaluadores, psicólogos. | Administradores, responsable técnico. |
 | **Requiere contraseña** | No. | Solo para guardar en GitHub. |
-| **Persistencia de datos** | Solo lectura; no modifica el catálogo. | Trabaja en memoria; los cambios persisten al guardar JSON. |
-| **Salida principal** | Material imprimible en A4. | Archivos JSON para actualizar el catálogo. |
+| **Persistencia de datos** | Solo lectura; no modifica el catálogo. | Trabaja en memoria; los cambios persisten al usar el botón **Guardar**. |
+| **Salida principal** | Material imprimible en A4. | Datos guardados en el repositorio `bd` via Netlify. |
 
 <CardGroup cols={2}>
   <Card

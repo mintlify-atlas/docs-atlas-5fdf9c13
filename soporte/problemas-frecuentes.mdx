@@ -1,7 +1,7 @@
 ---
 title: "Problemas frecuentes y soluciones del Gestor de Pruebas"
 sidebarTitle: "Problemas Frecuentes"
-description: "Soluciones rápidas para los problemas más comunes: errores de conexión, lista vacía de cargos, impresión sin colores y cambios perdidos."
+description: "Soluciones rápidas para los problemas más comunes: errores de conexión, lista vacía de cargos, impresión sin colores y cambios perdidos en el panel."
 ---
 
 Antes de revisar cada caso en detalle, recuerde que la gran mayoría de los problemas técnicos del Gestor de Pruebas dejan un mensaje descriptivo en la consola del navegador. Abrir esa consola es siempre el primer paso para diagnosticar cualquier error que no tenga una causa obvia a simple vista.
@@ -16,7 +16,7 @@ Antes de revisar cada caso en detalle, recuerde que la gran mayoría de los prob
 
 <AccordionGroup>
   <Accordion title='Aparece "Error de conexión…" al entrar / Estado: "Error al leer los datos"'>
-    Este mensaje indica que el navegador no pudo obtener los datos de los archivos JSON que necesita la aplicación.
+    La alerta completa dice: *«Error de conexión. Asegúrate de correr la app en Netlify o un servidor local.»* Indica que el navegador no pudo obtener los datos de los archivos JSON que necesita la aplicación.
 
     **Causas posibles:**
 
@@ -101,8 +101,16 @@ Antes de revisar cada caso en detalle, recuerde que la gran mayoría de los prob
     </Note>
   </Accordion>
 
+  <Accordion title='"Por favor seleccione al menos una dinámica"'>
+    Al presionar **Generar Formulario**, aparece este aviso y no se genera ningún informe.
+
+    **Causa:** No hay ninguna dinámica marcada en la sección **Dinámicas a aplicar**.
+
+    **Solución:** Marque una o más dinámicas de la lista antes de volver a presionar **Generar Formulario**. Si la lista está vacía, consulte el problema «No hay dinámicas para este cargo» en esta misma sección.
+  </Accordion>
+
   <Accordion title="El formulario generado desapareció de pantalla">
-    Después de presionar **Generar Formulario** y ver el resultado, el informe se borra y aparece el aviso *"Selección modificada. Presione 'Generar Formulario' para actualizar los datos."*
+    Después de presionar **Generar Formulario** y ver el resultado, el informe se borra y aparece el aviso *«Selección modificada. Presione 'Generar Formulario' para actualizar los datos.»*
 
     **Causa:** Este comportamiento es **intencional**. Si se cambia el cargo o se marca o desmarca una dinámica después de generar, la aplicación limpia el resultado automáticamente para evitar imprimir un formulario con datos mezclados (por ejemplo, hojas del postulante de un cargo distinto al del informe).
 
@@ -112,7 +120,7 @@ Antes de revisar cada caso en detalle, recuerde que la gran mayoría de los prob
 
 ---
 
-## Errores al guardar y exportar
+## Errores al guardar cambios
 
 <AccordionGroup>
   <Accordion title="Los cambios del Panel de Administración se perdieron">
@@ -124,7 +132,7 @@ Antes de revisar cada caso en detalle, recuerde que la gran mayoría de los prob
 
     <Steps>
       <Step title="Guarde siempre antes de salir">
-        Antes de recargar la página, navegar a otra pantalla o cerrar el navegador, presione **Guardar en GitHub** e ingrese la contraseña. La aplicación escribirá los tres archivos JSON directamente en el repositorio `FABIOR1981/bd`.
+        Antes de recargar la página, navegar a otra pantalla o cerrar el navegador, presione **Guardar** e ingrese la contraseña. La aplicación escribirá los tres archivos JSON directamente en el repositorio `FABIOR1981/bd` mediante la función de Netlify.
       </Step>
       <Step title="Si ya se perdieron los cambios">
         Deberá repetir los cambios desde cero en el Panel de Administración y guardarlos correctamente al finalizar.
@@ -132,21 +140,8 @@ Antes de revisar cada caso en detalle, recuerde que la gran mayoría de los prob
     </Steps>
 
     <Warning>
-      No existe ninguna función de deshacer ni historial de cambios en memoria. **Guardar en GitHub es la única manera de persistir las modificaciones.**
+      No existe ninguna función de deshacer ni historial de cambios en memoria. **Guardar es la única manera de persistir las modificaciones.**
     </Warning>
-  </Accordion>
-
-  <Accordion title="Solo se descargó un archivo (de los tres JSON)">
-    Al presionar **Descargar JSON Actualizado** en el Panel de Administración, el navegador descargó solamente uno de los tres archivos esperados (`areas.json`, `cargos.json` y `dinamicas.json`) en lugar de los tres.
-
-    **Causa:** Los navegadores modernos bloquean por defecto las descargas múltiples simultáneas originadas en un mismo sitio, ya que pueden considerarse comportamiento no deseado.
-
-    **Solución:**
-
-    1. Cuando el navegador muestre la notificación de bloqueo (generalmente en la barra de direcciones o en una alerta emergente), haga clic en ella y seleccione **Permitir descargas múltiples** para este sitio.
-    2. Vuelva a presionar **Descargar JSON Actualizado**. Esta vez se descargarán los tres archivos.
-
-    La configuración se mantiene para futuras sesiones en el mismo navegador y sitio, por lo que solo necesitará habilitarlo una vez.
   </Accordion>
 </AccordionGroup>
 
@@ -156,18 +151,18 @@ Antes de revisar cada caso en detalle, recuerde que la gran mayoría de los prob
 
 <AccordionGroup>
   <Accordion title='"No se pudo cargar el lector de .docx"'>
-    Al intentar usar el asistente **Directrices desde bases (IA)**, aparece este error antes de que se pueda seleccionar el archivo.
+    Al intentar usar el asistente **✨ Asistente de bases** en el Panel de Administración, aparece este error antes de que se pueda seleccionar el archivo.
 
-    **Causa:** El asistente necesita cargar la librería **Mammoth.js 1.6.0** desde el servicio externo `cdnjs.cloudflare.com` para poder leer archivos `.docx`. Si la conexión a Internet no está disponible o un proxy corporativo bloquea esa dirección, la carga falla.
+    **Causa:** El asistente necesita cargar la biblioteca **Mammoth.js 1.6.0** desde el servicio externo `cdnjs.cloudflare.com` para poder leer archivos `.docx`. Si la conexión a Internet no está disponible o un proxy corporativo bloquea esa dirección, la carga falla.
 
     **Soluciones:**
 
     - **Verifique la conexión a Internet** y que el dominio `cdnjs.cloudflare.com` no esté bloqueado por un firewall o proxy en su red.
-    - **Opción avanzada — Hospedar Mammoth localmente:** Si el entorno de red no permite acceder a CDNs externos, descargue el archivo `mammoth.browser.min.js` de la versión 1.6.0, colóquelo en el servidor y cambie la constante `MAMMOTH_URL` al inicio del archivo `bases_ia.js` para que apunte a la ruta local:
+    - **Opción avanzada — Hospedar Mammoth localmente:** Si el entorno de red no permite acceder a CDNs externos, descargue el archivo `mammoth.browser.min.js` de la versión 1.6.0, colóquelo en el servidor y cambie la constante `MAMMOTH` en `administracion.js` para que apunte a la ruta local:
 
     ```javascript
-    // bases_ia.js — línea inicial
-    const MAMMOTH_URL = '/js/mammoth.browser.min.js'; // ruta local
+    // administracion.js — constante cerca del inicio del bloque "asistente"
+    const MAMMOTH = '/js/mammoth.browser.min.js'; // ruta local
     ```
 
     <Note>
@@ -198,8 +193,8 @@ Antes de revisar cada caso en detalle, recuerde que la gran mayoría de los prob
   <Accordion title="Solo se imprime una hoja en blanco">
     Al usar la función de impresión del navegador directamente desde la página (no desde el botón **Imprimir Formulario**), el resultado es una hoja en blanco o el contenido no se ve correctamente.
 
-    **Causa:** La aplicación usa el evento `beforeprint` del navegador para copiar el contenido del informe desde el modal hacia una zona imprimible fuera de él antes de enviar al sistema de impresión. Si se imprime directamente desde el modal (por ejemplo, usando `Ctrl + P` mientras el modal está abierto sin haber generado antes), ese mecanismo puede no activarse correctamente.
+    **Causa:** La aplicación prepara el contenido del informe en una zona imprimible dedicada antes de abrir el diálogo del sistema operativo. Si se usa `Ctrl + P` directamente sin haber generado una evaluación, ese contenido no está listo.
 
-    **Solución:** Utilice siempre el botón **Imprimir Formulario** que aparece en la pantalla principal después de generar la evaluación. Ese botón activa el flujo correcto que garantiza que el contenido se prepare adecuadamente para impresión antes de abrir el diálogo del sistema operativo.
+    **Solución:** Utilice siempre el botón **Imprimir Formulario** que aparece en la pantalla principal después de generar la evaluación. Ese botón activa el flujo correcto que garantiza que el contenido se prepare adecuadamente antes de abrir el diálogo de impresión.
   </Accordion>
 </AccordionGroup>

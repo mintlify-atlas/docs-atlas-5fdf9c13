@@ -1,7 +1,7 @@
 ---
 title: "Cómo armar una evaluación psicotécnica con el Generador"
 sidebarTitle: "Armar Evaluación"
-description: "Guía paso a paso para seleccionar cargo, postulantes y dinámicas, y generar el paquete completo de evaluación listo para imprimir."
+description: "Guía paso a paso para seleccionar cargo, postulantes y dinámicas, generar el paquete completo de evaluación y guardarlo en el sistema."
 ---
 
 El **Generador de Evaluaciones** es la pantalla principal de la herramienta. Partiendo de la selección de un cargo, una cantidad de postulantes y las dinámicas a aplicar, la app construye en segundos un paquete completo: el informe del evaluador con guía y corrector, la tabla de puntaje de cada postulante y las hojas de trabajo para entregar a los candidatos. Todo queda listo para revisar en pantalla e imprimir en A4 con un solo clic.
@@ -27,17 +27,29 @@ El **Generador de Evaluaciones** es la pantalla principal de la herramienta. Par
       El tiempo estimado se puede ajustar manualmente en el campo de minutos del panel lateral. Si la selección cambia, el campo vuelve al valor calculado automáticamente. Use el botón de reset (↺) para restaurar el cálculo en cualquier momento.
     </Note>
   </Step>
-  <Step title="Presionar Generar Formulario">
-    Una vez definidos cargo, postulantes y dinámicas, presione el botón **Generar Formulario**. La app abre un cuadro donde puede confirmar el nombre del llamado, la fecha de evaluación y —si el sistema requiere contraseña— la clave de acceso. Al aceptar, el informe completo se despliega en pantalla.
+  <Step title="Presionar Generar informe">
+    Una vez definidos cargo, postulantes y dinámicas, presione el botón **Generar informe**. La app abre el cuadro **Generar y guardar informe**, donde puede completar el nombre del llamado, la fecha de evaluación y —si el sistema requiere contraseña— la clave de acceso. Al confirmar, el informe se guarda en el sistema y se despliega en pantalla listo para revisar.
   </Step>
   <Step title="Revisar e imprimir">
-    Revise el formulario generado en pantalla. Cuando esté conforme, presione **Imprimir Formulario** para abrir el diálogo de impresión del navegador. Los controles, botones y selectores de la interfaz **no se imprimen**; solo el informe y las hojas de trabajo.
+    Revise el formulario generado en la vista previa. Cuando esté conforme, presione **Imprimir A4** para abrir el diálogo de impresión del navegador. Los controles, botones y selectores de la interfaz **no se imprimen**; solo el informe y las hojas de trabajo.
   </Step>
 </Steps>
 
 <Warning>
-  Si después de generar el formulario cambia el cargo o marca/desmarca alguna dinámica, el formulario que se muestra en pantalla **se borra** y aparece el aviso: *"Selección modificada. Presione 'Generar Formulario' para actualizar los datos."* Esto evita imprimir material mezclado o desactualizado. Simplemente vuelva a presionar **Generar Formulario** para regenerar el paquete con la nueva selección.
+  Si después de ver el informe vuelve a la pantalla principal y cambia el cargo o marca/desmarca dinámicas, la selección se restablece desde cero. El nuevo informe se generará con la selección actualizada la próxima vez que presione **Generar informe**. Esto evita imprimir material mezclado o desactualizado.
 </Warning>
+
+---
+
+## Guardar y recuperar informes
+
+Al presionar **Generar informe**, la app guarda automáticamente una instantánea completa del informe en el sistema (vía GitHub). El informe recibe un código único (por ejemplo, `INF-2026-001`) que aparece en la cabecera de la vista previa.
+
+Para recuperar un informe ya guardado, presione el botón **📂 Informes** en la barra superior. Puede buscar por nombre, cargo o código, o ingresar el código directamente en el campo **Abrir por código**.
+
+<Note>
+  Si al guardar el sistema detecta que ya existe un informe con el mismo nombre, ofrece la opción de **actualizar** el existente (conservando su código) o **cambiar el nombre** para crear uno nuevo.
+</Note>
 
 ---
 

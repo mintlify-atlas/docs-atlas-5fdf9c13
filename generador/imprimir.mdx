@@ -1,31 +1,31 @@
 ---
-title: "Imprimir o guardar en PDF la evaluación generada"
+title: "Cómo imprimir o guardar en PDF la evaluación generada"
 sidebarTitle: "Imprimir"
 description: "Cómo imprimir el paquete de evaluación en A4, exportar a PDF, y configurar los gráficos de fondo para mantener los colores en la impresión."
 ---
 
-Una vez generado el formulario, la herramienta pone a disposición el botón **Imprimir Formulario** que abre directamente el diálogo de impresión del navegador. El resultado es un documento limpio en A4: solo el informe del evaluador y las hojas de trabajo de los postulantes, sin botones, selectores ni ningún elemento de la interfaz. Desde ese mismo diálogo también puede exportar el paquete completo a PDF para archivarlo o compartirlo de forma digital.
+Una vez generado el formulario, la herramienta pone a disposición el botón **Imprimir A4** que abre directamente el diálogo de impresión del navegador. El resultado es un documento limpio en A4: solo el informe del evaluador y las hojas de trabajo de los postulantes, sin botones, selectores ni ningún elemento de la interfaz. Desde ese mismo diálogo también puede exportar el paquete completo a PDF para archivarlo o compartirlo de forma digital.
 
 ---
 
-## El botón Imprimir Formulario
+## El botón Imprimir A4
 
-Presione **Imprimir Formulario** en la barra de controles del generador para abrir el diálogo de impresión del navegador. La interfaz —botones, interruptores, selectores de cargo y dinámicas— **no forma parte del documento impreso**; solo se imprime el contenido del informe generado.
+Presione **Imprimir A4** en la barra inferior de la vista previa del informe para abrir el diálogo de impresión del navegador. La interfaz —botones, interruptores, selectores de cargo y dinámicas— **no forma parte del documento impreso**; solo se imprime el contenido del informe generado.
 
 <Note>
-  El botón **Imprimir Formulario** solo está disponible después de presionar **Generar Formulario**. Si la selección se modificó y el formulario fue borrado, primero regenere el informe.
+  El botón **Imprimir A4** solo está disponible dentro del diálogo de **Vista previa del informe**, que se abre después de generar y guardar el informe. Si aún no generó el informe, primero presione **Generar informe** en el panel principal.
 </Note>
 
 ---
 
 ## Configuración de página A4
 
-El informe está diseñado para hoja **A4** con márgenes de 15 mm en todos los lados. Estas propiedades están definidas en la regla CSS `@page`:
+El informe está diseñado para hoja **A4 en orientación vertical** con márgenes de 12 mm en todos los lados. Estas propiedades están definidas en la regla CSS `@page`:
 
 ```css
 @page {
-  size: A4;
-  margin: 15mm;
+  size: A4 portrait;
+  margin: 12mm;
 }
 ```
 
@@ -41,7 +41,7 @@ Cada hoja de trabajo de candidato (elemento con clase `.candidate-sheet`) fuerza
 
 Para obtener un archivo PDF en lugar de enviar el documento a una impresora física:
 
-1. Presione **Imprimir Formulario**.
+1. Presione **Imprimir A4**.
 2. En el diálogo de impresión, seleccione **Guardar como PDF** (o "Microsoft Print to PDF" en Windows) como destino.
 3. Elija la carpeta y el nombre del archivo, y confirme.
 
@@ -57,7 +57,7 @@ El PDF resultante contiene exactamente lo que vería en papel: informe del evalu
 
 Imprimir desde dentro de un elemento `<dialog>` del navegador puede generar una página en blanco inicial o perder parte del contenido. Para evitarlo, la herramienta intercepta el evento de impresión y copia el informe fuera del modal antes de que el navegador procese la hoja.
 
-Cuando el usuario presiona **Imprimir Formulario** o usa el atajo de teclado **Ctrl + P** (con el informe visible), se dispara el evento `beforeprint`. En ese momento, la función `preparaImpresion()` copia el HTML del informe al contenedor `#zonaImpresion`, que vive fuera del diálogo modal y sí es accesible al motor de impresión:
+Cuando el usuario presiona **Imprimir A4** o usa el atajo de teclado **Ctrl + P** (con el informe visible), se dispara el evento `beforeprint`. En ese momento, la función `preparaImpresion()` copia el HTML del informe al contenedor `#zonaImpresion`, que vive fuera del diálogo modal y sí es accesible al motor de impresión:
 
 ```js
 const preparaImpresion = () => {

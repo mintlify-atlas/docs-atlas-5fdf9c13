@@ -1,7 +1,7 @@
 ---
 title: "Estructura de archivos del Gestor de Pruebas para Llamados"
 sidebarTitle: "Estructura de Archivos"
-description: "Descripción de cada archivo del repositorio: qué hace, de qué depende y qué globals expone o consume."
+description: "Descripción de cada archivo: qué hace, de qué depende, qué globals expone o consume y en qué orden se cargan los scripts en cada pantalla HTML."
 ---
 
 El repositorio del Gestor de Pruebas para Llamados tiene una estructura deliberadamente plana: no hay paso de compilación, no hay carpetas `src/` ni `dist/`, y cada archivo cumple una responsabilidad única y bien delimitada. Entender qué hace cada pieza y en qué orden se carga es fundamental para realizar cualquier modificación sin romper el contrato de variables globales del que depende la aplicación.
@@ -20,7 +20,7 @@ gestor_pruebas_llamados/
 │   ├── interfaz.js             # Lógica del generador: selección de cargos,
 │   │                           #   dinámicas, tiempos y generación del informe
 │   ├── informe.js              # Constructores HTML del informe y hojas de trabajo
-│   ├── administracion.js       # Lógica ABM: altas, ediciones y bajas
+│   ├── administracion.js       # Lógica ABM: altas, ediciones, bajas y asistente IA
 │   └── utilidades.js           # Funciones compartidas: esc(), bonito(), etc.
 │
 ├── estilos/
@@ -32,9 +32,6 @@ gestor_pruebas_llamados/
 │   └── datos.js                # Capa de datos: objeto Datos con cargar(),
 │                               #   guardar(), listarInformes(), leerInforme(),
 │                               #   guardarInforme()
-│
-├── bases_ia.js                 # Módulo autónomo del asistente "Directrices
-│                               #   desde bases (IA)"; se inyecta en index.html
 │
 ├── netlify/
 │   └── functions/
@@ -52,17 +49,17 @@ gestor_pruebas_llamados/
 
 <AccordionGroup>
   <Accordion title="index.html — Pantalla del Generador">
-    Punto de entrada principal de la aplicación. Contiene el panel de control (selector de cargo, cantidad de postulantes, casillas de dinámicas, botón **Generar Formulario**) y el área imprimible donde se vuelca el informe generado.
+    Punto de entrada principal de la aplicación. Contiene el panel de control (selector de área y cargo, casillas de dinámicas, cantidad de postulantes, botón **Generar**) y el área imprimible donde se vuelca el informe generado.
 
-    Carga los scripts en este orden fijo: `datos/datos.js` → `js/utilidades.js` → `js/informe.js` → `js/interfaz.js` → `bases_ia.js`. El orden importa: cada script puede depender de los globales que expongan los anteriores.
+    Carga los scripts en este orden fijo: `js/utilidades.js` → `datos/datos.js` → `js/informe.js` → `js/interfaz.js`. El orden importa: cada script puede depender de los globales que expongan los anteriores.
 
     Las reglas CSS de impresión (`@page`, `print-color-adjust: exact`, saltos de página por `.candidate-sheet`) están definidas en `estilos/aplicacion.css`, que también se carga desde esta página.
   </Accordion>
 
   <Accordion title="admin.html — Panel de Administración">
-    Pantalla de gestión del catálogo. Contiene los modales para crear y editar áreas, cargos y dinámicas, y el botón **Guardar en GitHub**.
+    Pantalla de gestión del catálogo. Contiene los modales para crear y editar áreas, cargos y dinámicas, el botón **Guardar en GitHub** y el asistente de IA integrado en el mismo panel.
 
-    Carga: `datos/datos.js` → `js/utilidades.js` → `js/administracion.js`. No carga `informe.js` ni `bases_ia.js`.
+    Carga: `js/utilidades.js` → `datos/datos.js` → `js/administracion.js`. No carga `js/informe.js`.
 
     <Warning>
       Todos los cambios realizados en esta pantalla se mantienen únicamente en memoria. Si la página se recarga sin haber presionado **Guardar en GitHub**, los cambios se pierden de forma permanente.
@@ -76,14 +73,14 @@ gestor_pruebas_llamados/
   <Accordion title="js/interfaz.js — Lógica del Generador">
     Núcleo funcional de la pantalla principal. Sus responsabilidades son:
 
-    - Al cargar la página, llama a `Datos.cargar()` y guarda el resultado en `baseDatosGlobal`.
-    - Rellena el selector de cargos a partir de los datos cargados.
+    - Al cargar la página, llama a `Datos.cargar()` y guarda el resultado en la variable local `D` (`{ areas, cargos, dinamicas }`).
+    - Rellena los selectores de área y cargo a partir de los datos cargados.
     - Al cambiar el cargo, filtra `dinamicas` por `cargo_id` y muestra las casillas correspondientes.
     - Calcula el tiempo total estimado sumando los minutos de las dinámicas marcadas.
-    - Al presionar **Generar Formulario**, construye el HTML completo del informe llamando a funciones de `informe.js`.
+    - Al presionar **Generar**, construye el HTML completo del informe llamando a funciones de `informe.js`.
     - Implementa `limpiarResultados()`, que borra el informe si se cambia la selección para evitar datos mezclados.
 
-    **Expone:** `baseDatosGlobal` (objeto con `areas`, `cargos`, `dinamicas`).
+    **Expone:** `D` (objeto local con `areas`, `cargos`, `dinamicas`).
     **Consume:** `Datos` (de `datos/datos.js`), funciones de `informe.js`, `esc()` y `bonito()` de `utilidades.js`.
   </Accordion>
 
@@ -96,50 +93,37 @@ gestor_pruebas_llamados/
     - Aplicación del interruptor **Guía y corrector** mediante la clase CSS `ocultar-guia`.
 
     **Expone:** funciones de construcción HTML (consumidas por `interfaz.js`).
-    **Consume:** `baseDatosGlobal` (implícitamente, a través de los parámetros que le pasa `interfaz.js`), `esc()` de `utilidades.js`.
+    **Consume:** los datos que le pasa `interfaz.js` como parámetros, `esc()` de `utilidades.js`.
   </Accordion>
 
-  <Accordion title="js/administracion.js — Lógica del Panel ABM">
-    Gestiona el ciclo de vida completo del catálogo en memoria:
+  <Accordion title="js/administracion.js — Lógica del Panel ABM y asistente IA">
+    Gestiona el ciclo de vida completo del catálogo en memoria y aloja el asistente **Directrices desde bases (IA)**:
 
     - **Altas:** `guardarArea()`, `guardarCargo()`, `guardarDinamica()` con generación automática de códigos (`CAR-<área>-<esp>-<NN>`, `DIN-<área>-<esp>-<NN>`).
     - **Edición:** `editarDinamica()` — el código no cambia al editar.
-    - **Baja:** `eliminarDinamica()` con confirmación.
+    - **Baja lógica:** `eliminarDinamica()` con confirmación; los elementos eliminados se marcan `activo: false`.
     - **Exportación:** llama a `Datos.guardar()` para escribir los tres JSON en el repositorio `bd` vía la Netlify Function.
+    - **Asistente IA:** carga **Mammoth.js 1.6.0** desde `cdnjs.cloudflare.com` (constante `MAMMOTH` al inicio del archivo) únicamente cuando el usuario activa el asistente. Extrae el texto de un `.docx` íntegramente en el navegador (el archivo no se sube a ningún servidor), anonimiza datos sensibles y genera un prompt para copiar a una IA externa.
 
     Notas importantes sobre las operaciones **no disponibles** desde la interfaz: modificar o eliminar áreas y cargos existentes requiere editar los archivos JSON a mano en el repositorio `bd`.
 
     **Expone:** funciones del ABM accesibles desde los eventos del HTML.
-    **Consume:** `Datos` (de `datos/datos.js`), `baseDatosGlobal`, `esc()` y `bonito()` de `utilidades.js`.
+    **Consume:** `Datos` (de `datos/datos.js`), `esc()` y `bonito()` de `utilidades.js`.
+
+    <Note>
+      Para cambiar la URL de Mammoth (por ejemplo, para usar una copia local), modifique únicamente la constante `MAMMOTH` al comienzo de `js/administracion.js`. No es necesario tocar ningún otro archivo.
+    </Note>
   </Accordion>
 
   <Accordion title="js/utilidades.js — Funciones compartidas">
     Biblioteca de funciones de propósito general usadas por los demás scripts:
 
     - `esc(texto)` — Escapa caracteres especiales HTML (`<`, `>`, `"`, `&`) para evitar inyección de HTML al insertar datos del usuario en el DOM.
-    - `bonito(json)` — Serializa un objeto JSON con indentación de 4 espacios, listo para descargar como archivo legible.
+    - `bonito(nombre)` — Aplica capitalización «título» a un nombre para mostrarlo con formato consistente.
     - Funciones auxiliares para la composición de hojas del postulante y el conteo de renglones de respuesta.
 
     **Expone:** `esc()`, `bonito()` y utilidades de composición.
     **Consume:** ninguna dependencia interna.
-  </Accordion>
-
-  <Accordion title="bases_ia.js — Asistente de IA (módulo autónomo)">
-    Módulo autocontenido implementado como función autoejecutable (IIFE). Se inyecta en `index.html` como el último script de la página y añade dinámicamente su propio botón, modal y estilos sin modificar el HTML existente.
-
-    Flujo interno:
-    1. Carga **Mammoth.js 1.6.0** desde `cdnjs.cloudflare.com` solo cuando el usuario activa el asistente por primera vez.
-    2. Extrae el texto del archivo `.docx` seleccionado íntegramente en el navegador (el archivo nunca se envía a ningún servidor).
-    3. Detecta competencias, tareas, cargo y área usando expresiones regulares contra el texto extraído.
-    4. Anonimiza correos, documentos, fechas, montos y números de llamado, más los términos que indique el usuario.
-    5. Genera el prompt final para copiar a una IA externa.
-
-    **Expone:** `MAMMOTH_URL` (constante configurable al inicio del archivo).
-    **Consume:** `baseDatosGlobal` (para comparar cargos y áreas detectados contra el catálogo existente).
-
-    <Note>
-      Para cambiar la URL de Mammoth (por ejemplo, para usar una copia local), modifique únicamente la constante `MAMMOTH_URL` al comienzo de `bases_ia.js`. No es necesario tocar ningún otro archivo.
-    </Note>
   </Accordion>
 </AccordionGroup>
 
@@ -175,10 +159,12 @@ gestor_pruebas_llamados/
     | Método | Tipo | Descripción |
     |---|---|---|
     | `Datos.cargar()` | `async` | GET a `/.netlify/functions/pruebas`. Retorna `{ areas, cargos, dinamicas }`. |
-    | `Datos.guardar(datos, clave)` | `async` | POST a `/.netlify/functions/pruebas`. Escribe los tres JSON en el repositorio `bd`. |
+    | `Datos.guardar(base, claveIngresada)` | `async` | POST a `/.netlify/functions/pruebas`. Escribe los tres JSON en el repositorio `bd`. |
     | `Datos.listarInformes()` | `async` | GET del índice `informes.json`. Retorna el listado de informes guardados. |
-    | `Datos.leerInforme(id)` | `async` | GET de `informes/<id>.json`. Retorna el informe completo. |
-    | `Datos.guardarInforme(informe, clave)` | `async` | POST que escribe el informe en `informes/` y actualiza el índice. |
+    | `Datos.leerInforme(codigo)` | `async` | GET de `informes/<codigo>.json`. Retorna el informe completo. |
+    | `Datos.guardarInforme(informe, opciones)` | `async` | POST que escribe el informe en `informes/` y actualiza el índice. |
+
+    También expone el getter `Datos.origen`, que devuelve `'bd'` tras una carga o guardado exitoso.
 
     **Expone:** `Datos` (objeto global).
     **Consume:** ninguna dependencia interna; usa `fetch` nativo del navegador.
@@ -193,7 +179,7 @@ gestor_pruebas_llamados/
 
     **Operaciones que implementa:**
 
-    - `GET` sin cuerpo → Lee `areas.json`, `cargos.json` y `dinamicas.json` del repositorio `bd` en paralelo y los devuelve combinados.
+    - `GET` sin parámetros → Lee `areas.json`, `cargos.json` y `dinamicas.json` del repositorio `bd` en paralelo y los devuelve combinados.
     - `GET` con parámetro de informe → Lee un informe individual o el índice de informes.
     - `POST` con datos → Valida la clave (`CLAVE_PRUEBAS`), luego escribe o actualiza los archivos en `bd` usando la API de contenidos de GitHub (incluyendo el SHA del archivo previo para actualizaciones).
 
@@ -213,7 +199,7 @@ gestor_pruebas_llamados/
 
 <AccordionGroup>
   <Accordion title="netlify.toml — Configuración de Netlify">
-    Archivo de configuración declarativa para el despliegue en Netlify. Define que el directorio raíz del proyecto es la carpeta a publicar (sin comando de build) y configura una redirección que devuelve `404` para cualquier petición a `/documentacion/*`, manteniendo esa carpeta inaccesible desde el exterior aunque exista en el repositorio.
+    Archivo de configuración declarativa para el despliegue en Netlify. No define ningún comando de build ni directorio de publicación alternativo (la raíz del repositorio se publica tal cual). Configura una redirección que devuelve `404` para cualquier petición a `/documentacion/*`, manteniendo esa carpeta inaccesible desde el exterior aunque exista en el repositorio.
 
     ```toml
     [[redirects]]
@@ -229,16 +215,15 @@ gestor_pruebas_llamados/
 
 ## Tabla de contratos de variables globales
 
-Los scripts no usan módulos ES (`import`/`export`): comparten estado a través de variables globales. Modificar el orden de carga de scripts sin verificar estos contratos puede causar errores de referencia en tiempo de ejecución.
+Los scripts no usan módulos ES (`import`/`export`): comparten estado a través del objeto global `Datos` y de variables locales por pantalla. Modificar el orden de carga de scripts sin verificar estos contratos puede causar errores de referencia en tiempo de ejecución.
 
 | Global | Expuesto por | Consumido por | Descripción |
 |---|---|---|---|
 | `Datos` | `datos/datos.js` | `js/interfaz.js`, `js/administracion.js` | Objeto con los métodos de acceso a la API. Debe cargarse antes que cualquier script que lo use. |
-| `baseDatosGlobal` | `js/interfaz.js` | `js/informe.js` (implícitamente), `bases_ia.js` | Contiene `{ areas, cargos, dinamicas }` una vez que `Datos.cargar()` resuelve. Disponible solo después del evento `DOMContentLoaded`. |
-| `MAMMOTH_URL` | `bases_ia.js` (constante interna) | `bases_ia.js` | URL de carga de Mammoth.js. Modificar esta constante es la forma oficial de apuntar a una copia local de la librería. |
+| `D` | `js/interfaz.js` (generador) | `js/informe.js` (a través de parámetros) | Contiene `{ areas, cargos, dinamicas }` una vez que `Datos.cargar()` resuelve. Variable local de cada pantalla: `interfaz.js` y `administracion.js` declaran su propia copia. |
 
 <Warning>
-  El orden de carga de scripts en el HTML no es negociable. Si se reordena, se añaden módulos ES o se migra a un bundler, es imprescindible verificar que `Datos` esté disponible antes de que `interfaz.js` o `administracion.js` intenten usarlo, y que `baseDatosGlobal` esté populado antes de que `informe.js` o `bases_ia.js` lo lean.
+  El orden de carga de scripts en el HTML no es negociable. En `index.html` el orden es: `js/utilidades.js` → `datos/datos.js` → `js/informe.js` → `js/interfaz.js`. En `admin.html`: `js/utilidades.js` → `datos/datos.js` → `js/administracion.js`. Si se reordena o se migra a un bundler, es imprescindible verificar que `Datos` esté disponible antes de que `interfaz.js` o `administracion.js` intenten usarlo.
 </Warning>
 
 ---

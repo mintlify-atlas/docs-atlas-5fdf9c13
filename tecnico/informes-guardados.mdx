@@ -8,7 +8,7 @@ Los informes guardados permiten conservar una instantánea completa de una sesi�
 
 ## Estructura de almacenamiento
 
-```
+```text
 pruebas_llamados/
 ├── areas.json
 ├── cargos.json
@@ -28,7 +28,7 @@ pruebas_llamados/
 
 ## Formato del código de informe
 
-Los informes se identifican con el patrón `INF-<año>-<NNN>`:
+Los informes se identifican con el patrón `INF-<año>-<NNN>`, validado por la expresión regular `/^INF-\d{4}-\d{3,}$/`:
 
 | Parte | Descripción | Ejemplo |
 |-------|-------------|---------|
@@ -52,7 +52,7 @@ Si dos usuarios intentan guardar un informe al mismo tiempo, pueden entrar en co
     Si GitHub responde `409` o `422` al escribir el archivo del informe o al actualizar el índice, se detecta un conflicto.
   </Step>
   <Step title="Espera y reintento">
-    Se espera `120ms × número_de_intento` (120ms, 240ms, 360ms…) y se vuelve al primer paso con el índice actualizado.
+    Se espera `120 × (intento + 1)` ms (120 ms, 240 ms, 360 ms…) y se vuelve al primer paso con el índice actualizado.
   </Step>
   <Step title="Límite de reintentos">
     Si tras **6 intentos** sigue sin poder guardar, la función lanza un error `500` con el mensaje: *"No se pudo guardar: otro guardado simultáneo ocupó el índice. Intente de nuevo."*
@@ -63,7 +63,7 @@ Si dos usuarios intentan guardar un informe al mismo tiempo, pueden entrar en co
 
 ## GET `?informes=1` — Listar todos los informes
 
-Devuelve el array del índice `informes.json` con las entradas livianas de todos los informes guardados. Si no existe ningún informe todavía, devuelve un array vacío.
+Devuelve el array del índice `informes.json` con las entradas livianas de todos los informes guardados. Si el archivo no existe o no contiene un array válido, devuelve un array vacío `[]`.
 
 ### Solicitud
 
@@ -140,7 +140,7 @@ X-Clave: <contraseña>
 
 | Código | Descripción |
 |--------|-------------|
-| `200`  | Array de entradas (vacío `[]` si no hay informes) |
+| `200`  | Array de entradas (vacío `[]` si no hay informes o el índice no es un array válido) |
 | `401`  | Contraseña inválida |
 | `500`  | Error de servidor |
 
@@ -158,7 +158,7 @@ X-Clave: <contraseña>
 ```
 
 <ParamField query="informe" type="string" required>
-  Código del informe a leer. Debe coincidir exactamente con el patrón `INF-DDDD-DDD+` (4 dígitos de año, guion, 3 o más dígitos de número). Si el formato no es válido, la función responde `400` sin consultar GitHub.
+  Código del informe a leer. Debe cumplir la expresión regular `/^INF-\d{4}-\d{3,}$/`: prefijo `INF-`, 4 dígitos de año, guion, y 3 o más dígitos de número. Si el formato no es válido, la función responde `400` con `"Código de informe inválido"` sin consultar GitHub.
 </ParamField>
 
 ### Respuesta exitosa `200`
@@ -203,7 +203,7 @@ Devuelve el objeto completo del informe, que incluye todos los campos del índic
 | Código | Descripción |
 |--------|-------------|
 | `200`  | Informe completo |
-| `400`  | Código con formato inválido (no cumple `INF-DDDD-DDD+`) |
+| `400`  | Código con formato inválido: `"Código de informe inválido"` |
 | `401`  | Contraseña inválida |
 | `404`  | No existe ningún informe con ese código |
 | `500`  | Error de servidor |
@@ -256,7 +256,7 @@ Content-Type: application/json
 </ParamField>
 
 <ParamField body="reemplazar" type="boolean">
-  Si es `false` (por defecto) y ya existe un informe con el mismo nombre, el servidor responde `409` sin guardar nada. Si es `true`, el informe existente se actualiza con los nuevos datos.
+  Si es `false` (por defecto) y ya existe un informe con el mismo nombre, el servidor responde `409` sin guardar nada. Si es `true`, el informe existente se actualiza con los nuevos datos conservando su código.
 </ParamField>
 
 <ParamField body="informe" type="object" required>
@@ -338,7 +338,7 @@ El límite de 300.000 caracteres del JSON incluye el contenido de las consignas,
 
 ## Deduplicación por nombre
 
-El sistema no usa el código del informe como clave de identidad para los guardados: usa el **nombre normalizado**. La normalización elimina tildes, convierte a minúsculas y colapsa espacios múltiples. Esto significa:
+El sistema no usa el código del informe como clave de identidad para los guardados: usa el **nombre normalizado**. La normalización aplica descomposición NFD, elimina tildes y diacríticos, convierte a minúsculas y colapsa espacios múltiples. Esto significa:
 
 - `"Evaluación Contador - Enero 2025"` y `"evaluacion contador - enero 2025"` son **el mismo informe**.
 - Guardar con el mismo nombre (aunque cambie el contenido) **actualiza** el informe existente y conserva su código.
@@ -369,7 +369,7 @@ const informe = await Datos.leerInforme('INF-2025-001');
 
 Llama a `GET /.netlify/functions/pruebas?informe=<código>`. Si el código no existe, la promesa se rechaza con `{ status: 404 }`.
 
-### `Datos.guardarInforme(informe, opciones)`
+### `Datos.guardarInforme(informe, { clave, reemplazar })`
 
 ```js
 // Guardar (con protección contra sobreescritura):

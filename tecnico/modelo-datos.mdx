@@ -1,7 +1,7 @@
 ---
 title: "Modelo de datos: areas.json, cargos.json y dinamicas.json"
 sidebarTitle: "Modelo de Datos"
-description: "Estructura completa de los tres archivos JSON que alimentan la aplicación, con ejemplos, relaciones y convenciones de códigos."
+description: "Estructura de los tres JSON del catálogo: campos, relaciones, convenciones de códigos y fórmula de puntaje normalizado sobre 30 puntos."
 ---
 
 El **Gestor de Pruebas para Llamados** no tiene base de datos ni backend propio: toda la información del catálogo vive en tres archivos JSON alojados en el repositorio `FABIOR1981/bd`, dentro de la carpeta `pruebas_llamados/`. Cuando el navegador carga la aplicación, la función de Netlify `/.netlify/functions/pruebas` lee esos tres archivos desde GitHub y los entrega al frontend; a partir de ese momento, todo el procesamiento (filtrado, cálculo de tiempos, generación de puntajes) ocurre íntegramente en el cliente. Comprender la estructura de estos archivos es indispensable para mantener el catálogo, corregir errores de datos o incorporar los bloques JSON que genera el asistente de IA.
@@ -96,7 +96,7 @@ El panel de administración genera los códigos automáticamente siguiendo estas
 |---|---|---|
 | `comp` | `string` | Nombre de la competencia; aparece como encabezado de columna en la tabla de puntaje. |
 | `desc` | `string` | Descripción breve que se muestra en la leyenda del informe del evaluador. |
-| `codigo` | `string` | **Opcional.** Código corto (p. ej. `"MAC"`). Cuando una dinámica referencia uno o más códigos, solo las competencias con esos códigos aplican a esa dinámica. |
+| `codigo` | `string` | **Opcional.** Código corto (p. ej. `"MAC"`). Si no se define, el sistema genera uno automático (`C01`, `C02`, etc.). Cuando una dinámica lista códigos en su campo `competencias`, solo las competencias con esos códigos aplican a esa dinámica. |
 
 <Warning>
   Los cargos creados desde el panel de administración reciben automáticamente **dos competencias de ejemplo con texto provisional**. Esas competencias deben reemplazarse editando `cargos.json` a mano antes de usar el cargo en una evaluación real. El panel ABM no permite editar competencias de forma directa.
@@ -132,12 +132,14 @@ El panel de administración genera los códigos automáticamente siguiendo estas
 | `cargo_id` | `string` | Debe coincidir exactamente con la clave del cargo en `cargos.json`. |
 | `titulo` | `string` | Nombre corto de la dinámica; se muestra en la interfaz y en los documentos impresos. |
 | `desc` | `string` | Descripción breve que aparece en el informe del evaluador. |
-| `tiempo_limite` | `string` | Texto libre. El generador extrae todos los números del texto y toma el mayor como minutos de esa dinámica para el cálculo del tiempo total. |
+| `tiempo_limite` | `string` | Texto libre. La función `mins()` extrae todos los números del texto y toma el mayor como minutos para el cálculo del tiempo total. |
 | `hoja_postulante` | `string` | Consigna para el candidato. Admite HTML seguro; los `\n` se respetan por `white-space: pre-line`. Los `<div class='renglon-respuesta'>` al final se agregan como renglones en blanco para escribir. |
 | `caso_o_consigna` | `string` | Objetivo de la prueba; se muestra en el informe del evaluador. |
 | `guia_evaluacion` | `string` | Guía de observación para el evaluador; los `\n` se convierten en `<br>`. |
 | `respuesta_esperada` | `string` | Corrector para el evaluador; los `\n` se convierten en `<br>`. |
+| `competencias` | `array` | **Opcional.** Lista de códigos de competencia (p. ej. `["MAC", "C02"]`). Cuando está presente, solo las competencias del cargo cuyos códigos estén en esta lista aplican a la dinámica. Si se omite, aplican todas. |
 | `peso` | `number` | **Opcional.** Pondera la dinámica en el cálculo del puntaje final normalizado. |
+| `puntaje_maximo` | `number` | **Opcional.** Puntaje máximo por competencia para esta dinámica. Si se omite, el valor por defecto es `5`. |
 | `renglones_hoja` | `number` | **Opcional (0–30).** Cantidad de renglones en blanco al final de la hoja del postulante. El panel ABM separa estos renglones para mostrarlos en el campo numérico y los recompone al guardar. |
 
 <Tip>
@@ -146,7 +148,7 @@ El panel de administración genera los códigos automáticamente siguiendo estas
 
 ### Comportamiento de `tiempo_limite`
 
-La función `minutosDe()` en `script.js` extrae todos los números de la cadena y toma el mayor como valor en minutos. Algunos ejemplos:
+La función `mins()` en `js/informe.js` extrae todos los números de la cadena y toma el mayor como valor en minutos. Algunos ejemplos:
 
 | Valor en `tiempo_limite` | Minutos computados |
 |---|---|
@@ -159,16 +161,16 @@ La función `minutosDe()` en `script.js` extrae todos los números de la cadena 
 
 ## Fórmula de puntaje
 
-Con **c** competencias definidas en el cargo y **d** dinámicas seleccionadas para la evaluación, cada celda de la tabla de puntaje se califica en una escala de **0 a 5**:
+Con **c** competencias aplicables y **d** dinámicas seleccionadas, cada celda de la tabla se califica con el puntaje máximo de esa dinámica (por defecto **0 a 5**):
 
 | Nivel | Máximo posible |
 |---|---|
-| Por dinámica (fila) | *c* × 5 |
-| Por competencia (columna) | *d* × 5 |
-| Total general | *c* × *d* × 5 |
+| Por dinámica (fila) | *c* × `puntaje_maximo` |
+| Por competencia (columna) | *d* × `puntaje_maximo` |
+| Total general | *c* × *d* × `puntaje_maximo` |
 
-El puntaje total se normaliza a **30 puntos**. Si alguna dinámica tiene el campo `peso` definido, ese valor pondera su contribución al puntaje final.
+El puntaje total se normaliza a **30 puntos**. Si alguna dinámica tiene el campo `peso` definido, ese valor pondera su contribución al puntaje final; si todos los pesos son iguales, la fórmula se simplifica a `Total ÷ máximo × 30`.
 
 <Note>
-  El campo `codigo` en las competencias del cargo permite restringir qué competencias aplican a cada dinámica. Si una dinámica referencia códigos de competencia específicos en su campo `caso_o_consigna`, solo esas columnas se incluyen en el cálculo de la fila correspondiente.
+  El campo `competencias` en una dinámica (arreglo de códigos de competencia) determina qué columnas aplican en esa fila de la tabla. Las competencias del cargo que no estén listadas aparecen como celdas vacías, lo que reduce el máximo aplicable de esa dinámica. Si `competencias` se omite, aplican todas las del cargo.
 </Note>

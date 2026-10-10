@@ -1,45 +1,33 @@
 ---
 title: "Guardar y publicar cambios del Panel de Administración"
 sidebarTitle: "Guardar Cambios"
-description: "Cómo descargar los JSON actualizados y publicarlos, y qué cambios requieren edición manual de los archivos por el administrador técnico."
+description: "Cómo guardar cambios del panel en GitHub vía Netlify Function y qué operaciones de administración requieren editar los JSON a mano."
 ---
 
 El Panel de Administración trabaja íntegramente sobre una **copia en memoria del navegador**: mientras hace cambios, nada se escribe en el servidor ni en los archivos del repositorio. Esto significa que si recarga la página o cierra la pestaña antes de guardar, todos los cambios realizados durante esa sesión se pierden sin posibilidad de recuperación. Este comportamiento es intencional — permite trabajar con libertad y descartar cambios si algo sale mal — pero exige completar siempre el proceso de guardado antes de salir del panel.
 
 <Warning>
-El navegador muestra una advertencia de "cambios sin guardar" si intenta salir del panel con modificaciones pendientes, pero **esta advertencia no guarda nada**: solo le da la oportunidad de volver y completar el proceso. No cierre ni recargue la página hasta haber exportado o guardado correctamente.
+El navegador muestra una advertencia de "cambios sin guardar" si intenta salir del panel con modificaciones pendientes, pero **esta advertencia no guarda nada**: solo le da la oportunidad de volver y completar el proceso. No cierre ni recargue la página hasta haber guardado correctamente.
 </Warning>
 
 ---
 
-## Dos formas de guardar
+## Guardar en GitHub (botón Guardar)
 
-Según la configuración del entorno de trabajo, existen dos caminos para persistir los cambios:
-
-<CardGroup cols={2}>
-  <Card title="Con Netlify + token de GitHub" icon="cloud-arrow-up">
-    Guarda los archivos directamente en el repositorio de datos a través de una Netlify Function. No requiere intervención del administrador técnico.
-  </Card>
-  <Card title="Exportación manual" icon="arrow-down-to-line">
-    Descarga los tres archivos JSON al equipo local y los envía al administrador técnico para que los reemplace en el repositorio y publique.
-  </Card>
-</CardGroup>
-
----
-
-## Opción 1: Guardar en GitHub (Netlify + token)
-
-Si la herramienta está configurada con una Netlify Function y un token de GitHub, el proceso de guardado es directo desde el propio panel:
+Los cambios se persisten directamente en el repositorio de datos a través de una **Netlify Function** que escribe en el repo `FABIOR1981/bd`. Este es el único mecanismo de guardado disponible desde el panel.
 
 <Steps>
-  <Step title="Presionar el botón de guardado">
-    Haga clic en el botón **Guardar en GitHub** del panel.
+  <Step title="Completar los cambios en el panel">
+    Realice todas las altas, ediciones o bajas que necesite antes de continuar. El contador de cambios pendientes en la barra lateral le indica cuántas operaciones están en cola.
+  </Step>
+  <Step title="Presionar el botón Guardar">
+    Haga clic en el botón **Guardar** del panel. Se abrirá un cuadro de diálogo solicitando la contraseña de administración.
   </Step>
   <Step title="Ingresar la contraseña">
-    Cuando el sistema lo solicite, ingrese la contraseña de administración (`CLAVE_PRUEBAS`).
+    Escriba la contraseña (`CLAVE_PRUEBAS`) configurada en las variables de entorno de Netlify y presione **Guardar**.
   </Step>
-  <Step title="Confirmar">
-    Presione **Guardar**. La Netlify Function escribe los archivos `areas.json`, `cargos.json` y `dinamicas.json` directamente en el repositorio `bd/pruebas_llamados/`.
+  <Step title="Confirmar el resultado">
+    La Netlify Function escribe `areas.json`, `cargos.json` y `dinamicas.json` directamente en el repositorio `bd/pruebas_llamados/`. Un mensaje de confirmación indicará qué archivos fueron actualizados. Si no hubo cambios en alguno de los archivos, ese archivo no se reescribe.
   </Step>
 </Steps>
 
@@ -47,48 +35,20 @@ Si la herramienta está configurada con una Netlify Function y un token de GitHu
 Si los archivos todavía no existen en `bd/pruebas_llamados/`, se crean automáticamente en el primer guardado. No es necesario crearlos previamente de forma manual.
 </Note>
 
----
-
-## Opción 2: Exportación manual (descarga de JSON)
-
-Si la opción de guardado directo no está disponible, el proceso consiste en descargar los archivos y enviárselos al administrador técnico para que los publique:
-
-<Steps>
-  <Step title="Realizar los cambios en el panel">
-    Complete todas las altas, ediciones o bajas que necesite en el Panel de Administración antes de continuar.
-  </Step>
-  <Step title="Descargar los archivos JSON">
-    Presione el botón **📥 Descargar JSON Actualizado**. El navegador descargará los tres archivos al mismo tiempo: `areas.json`, `cargos.json` y `dinamicas.json`.
-
-    Si el navegador le pregunta si permite descargar varios archivos desde el sitio, **acepte la solicitud**. Sin ese permiso, solo se descargará uno de los tres archivos.
-  </Step>
-  <Step title="Validar los archivos">
-    Antes de enviar, abra cada archivo en un editor de texto o utilice un validador JSON en línea para asegurarse de que el contenido no tenga errores de sintaxis. Un JSON inválido puede impedir que la herramienta cargue los datos correctamente.
-  </Step>
-  <Step title="Reemplazar los archivos en el repositorio">
-    Envíe los tres archivos al administrador técnico para que reemplace los originales en la carpeta `datos/` del repositorio del proyecto.
-  </Step>
-  <Step title="Publicar los cambios">
-    El administrador técnico realiza un *commit* con los nuevos archivos y lo sube al repositorio. Si el sitio está en Netlify, la plataforma detectará el cambio automáticamente y publicará la nueva versión en pocos minutos.
-  </Step>
-</Steps>
-
-<Warning>
-Si el navegador bloquea las descargas múltiples, solo se descargará uno de los tres archivos. Cuando el navegador le pregunte si desea permitir varias descargas desde el sitio, haga clic en **Permitir** y luego presione nuevamente **📥 Descargar JSON Actualizado** para volver a intentarlo.
-</Warning>
+Si la contraseña es incorrecta, el sistema mostrará un error y permitirá intentarlo de nuevo. Si desea **descartar** todos los cambios en memoria y volver al estado del último guardado, use el botón **Descartar cambios**.
 
 ---
 
 ## Cambios que requieren edición manual del JSON
 
-Algunas operaciones no pueden realizarse desde el Panel de Administración y requieren que el **administrador técnico** edite los archivos JSON directamente en la carpeta `datos/` del repositorio:
+Algunas operaciones no pueden realizarse desde el Panel de Administración y requieren que el **administrador técnico** edite los archivos JSON directamente en el repositorio `bd/pruebas_llamados/`:
 
 <CardGroup cols={1}>
-  <Card title="Definir o modificar competencias de un cargo" icon="list-check">
-    Los cargos creados desde el panel reciben dos competencias de ejemplo. Para establecer las competencias reales — que definen las columnas de la tabla de puntaje — es necesario editar el archivo `cargos.json` manualmente y modificar el campo `competencias` del cargo correspondiente.
+  <Card title="Cambiar la sigla de un área" icon="tag">
+    La sigla (clave de área, p. ej. `TEC`) no puede modificarse desde el panel: el campo aparece como solo lectura al editar. Para cambiarla hay que renombrar la clave en `areas.json` y actualizar el campo `area` de todos los cargos que la referencian en `cargos.json`, y los prefijos de los códigos de dinámicas afectados en `dinamicas.json`.
   </Card>
-  <Card title="Renombrar o eliminar áreas y cargos" icon="pen-to-square">
-    El panel no ofrece botones para renombrar ni eliminar áreas o cargos existentes. Estas operaciones deben hacerse editando directamente `areas.json` y `cargos.json`. Al renombrar un área, también hay que actualizar el campo `area` en todos los cargos que la referencian.
+  <Card title="Eliminar definitivamente un área o cargo" icon="trash">
+    El panel solo permite dar de baja (desactivar) áreas y cargos. Para eliminarlos de forma permanente hay que borrar la entrada correspondiente en `areas.json` o `cargos.json` y eliminar también las dinámicas huérfanas en `dinamicas.json`.
   </Card>
   <Card title="Corregir el cargo_id de una dinámica" icon="link-slash">
     Si una dinámica tiene un `cargo_id` incorrecto (lo que hace que no aparezca en el generador para el cargo correcto), la corrección debe hacerse editando `dinamicas.json` directamente. El campo `cargo_id` debe coincidir exactamente con la clave del cargo en `cargos.json`.

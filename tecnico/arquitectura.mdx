@@ -1,7 +1,7 @@
 ---
-title: "Arquitectura del Gestor de Pruebas para Llamados"
+title: "Arquitectura técnica del Gestor de Pruebas para Llamados"
 sidebarTitle: "Arquitectura"
-description: "Cómo se conectan el frontend estático, la Netlify Function y el repositorio GitHub bd donde viven los datos JSON."
+description: "Cómo se conectan el frontend estático, la única Netlify Function y el repositorio GitHub FABIOR1981/bd donde viven los archivos JSON de datos."
 ---
 
 El Gestor de Pruebas para Llamados está construido sobre tres capas que se complementan: un frontend completamente estático escrito en HTML5, CSS3 y JavaScript puro (sin frameworks ni paso de compilación), una única función serverless de Netlify que actúa como puente seguro hacia GitHub, y un repositorio separado (`FABIOR1981/bd`) que cumple el rol de base de datos almacenando los datos como archivos JSON. Esta separación permite desplegar el frontend en cualquier hosting estático mientras que los datos se gestionan de forma centralizada y versionada en GitHub.
@@ -26,7 +26,7 @@ El Gestor de Pruebas para Llamados está construido sobre tres capas que se comp
 
 ## Diagrama de arquitectura
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                       NAVEGADOR                         │
 │                                                         │
@@ -74,7 +74,7 @@ Cuando el navegador abre cualquiera de las dos pantallas, la secuencia es la sig
     La Netlify Function recibe la petición, usa el token `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` para autenticarse ante la API REST de GitHub y solicita los contenidos de `areas.json`, `cargos.json` y `dinamicas.json` en paralelo.
   </Step>
   <Step title="Respuesta al navegador">
-    La función combina los tres archivos en un único objeto JSON y lo devuelve al navegador. El cliente almacena el resultado en la variable global `baseDatosGlobal` para que todos los scripts puedan acceder a él.
+    La función combina los tres archivos en un único objeto JSON y lo devuelve al navegador. El cliente almacena el resultado en la variable local `D` (en `interfaz.js`) o en la copia local de `administracion.js` para que los scripts de cada pantalla puedan acceder a él.
   </Step>
 </Steps>
 
@@ -102,7 +102,7 @@ Los informes guardados siguen un flujo adicional: el informe completo se escribe
 
 <AccordionGroup>
   <Accordion title="Sin paso de compilación (no build step)">
-    El directorio raíz del proyecto se publica tal cual en Netlify (`publish = "/"` en `netlify.toml`, sin `command` de build). No hay transpilación, empaquetado ni generación de assets. Esto simplifica el despliegue al máximo: cualquier cambio en un archivo HTML, CSS o JS se refleja inmediatamente al hacer commit y push.
+    El directorio raíz del proyecto se publica tal cual en Netlify: el `netlify.toml` no define ningún comando de build ni directorio de publicación alternativo. No hay transpilación, empaquetado ni generación de assets. Esto simplifica el despliegue al máximo: cualquier cambio en un archivo HTML, CSS o JS se refleja inmediatamente al hacer commit y push.
   </Accordion>
 
   <Accordion title="GitHub como base de datos">
@@ -117,10 +117,10 @@ Los informes guardados siguen un flujo adicional: el informe completo se escribe
     </Warning>
   </Accordion>
 
-  <Accordion title="Estado compartido mediante variables globales">
-    Las páginas cargan sus scripts en un orden fijo definido en el HTML y comparten estado a través de variables globales. La más importante es `baseDatosGlobal`, que el generador (`interfaz.js`) popula al cargar y que `informe.js` consume al construir el informe. El objeto `Datos` (expuesto por `datos/datos.js`) es la única interfaz de acceso a la API.
+  <Accordion title="Estado compartido mediante variables locales por pantalla">
+    Las páginas cargan sus scripts en un orden fijo definido en el HTML. Cada pantalla gestiona sus propios datos en una variable local `D` definida en su script principal (`interfaz.js` o `administracion.js`). El objeto `Datos` (expuesto por `datos/datos.js`) es la única interfaz de acceso a la API y debe cargarse antes que cualquier script que lo utilice.
 
-    Si se modifica el orden de carga de scripts o se refactorizan módulos, debe verificarse que este contrato de globales se mantenga intacto.
+    Si se modifica el orden de carga de scripts o se refactorizan módulos, debe verificarse que este contrato se mantenga intacto.
   </Accordion>
 </AccordionGroup>
 
@@ -128,9 +128,9 @@ Los informes guardados siguen un flujo adicional: el informe completo se escribe
 
 ## Dependencia externa: Mammoth.js
 
-La única dependencia de terceros del frontend es **Mammoth.js 1.6.0**, que se carga dinámicamente desde `cdnjs.cloudflare.com` únicamente cuando el usuario activa el asistente **Directrices desde bases (IA)**. No se carga en ninguna otra situación, por lo que no afecta el tiempo de carga inicial de la aplicación.
+La única dependencia de terceros del frontend es **Mammoth.js 1.6.0**, que se carga dinámicamente desde `cdnjs.cloudflare.com` únicamente cuando el usuario activa el asistente **Directrices desde bases (IA)** en el Panel de Administración. La constante `MAMMOTH` al comienzo de `js/administracion.js` define la URL de carga. No se carga en ninguna otra situación, por lo que no afecta el tiempo de carga inicial de la aplicación.
 
-Si el entorno de red no permite acceder a CDNs externos, puede alojarse localmente y apuntar la constante `MAMMOTH_URL` en `bases_ia.js` a la ruta interna.
+Si el entorno de red no permite acceder a CDNs externos, puede alojarse localmente y apuntar la constante `MAMMOTH` en `js/administracion.js` a la ruta interna.
 
 ---
 

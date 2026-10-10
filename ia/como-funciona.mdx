@@ -1,16 +1,16 @@
 ---
-title: "Asistente IA: cómo generar dinámicas a partir de las bases del llamado"
+title: "Cómo funciona el Asistente de bases del llamado (IA)"
 sidebarTitle: "Cómo Funciona"
-description: "El Asistente IA lee el .docx de las bases, detecta cargo, área y competencias, y prepara un prompt listo para pegar en ChatGPT, Copilot o Gemini."
+description: "El asistente lee el .docx de las bases, detecta cargo, área y competencias, y prepara un prompt anonimizado listo para pegar en ChatGPT, Copilot o Gemini."
 ---
 
-El botón violeta **Directrices desde bases (IA)** transforma el archivo Word de las bases de un llamado en un prompt estructurado y anonimizado, listo para que una inteligencia artificial proponga cuatro dinámicas situacionales alineadas al perfil del cargo. Todo el proceso ocurre dentro del navegador: el asistente extrae solo los datos esenciales del perfil —cargo, área, competencias y tareas típicas—, aplica múltiples capas de anonimización y presenta el texto final para que el profesional lo revise y copie.
+El botón **✨ Asistente de bases**, ubicado en el Panel de Administración (`admin.html`), transforma el archivo Word de las bases de un llamado en un prompt estructurado y anonimizado, listo para que una inteligencia artificial proponga dinámicas situacionales alineadas al perfil del cargo. Todo el proceso ocurre dentro del navegador: el asistente extrae solo los datos esenciales del perfil —cargo, área, competencias y tareas típicas—, aplica múltiples capas de anonimización y presenta el texto final para que el profesional lo revise y copie.
 
 <Note>
-  El archivo `.docx` se lee completamente **en el navegador**, utilizando la biblioteca Mammoth.js. El documento **nunca se envía a ningún servidor** ni queda almacenado en ningún lugar: al cerrar la ventana, no queda copia.
+  El archivo `.docx` se lee completamente **en el navegador** mediante la biblioteca Mammoth.js 1.6.0, cargada desde `cdnjs.cloudflare.com`. El documento **nunca se envía a ningún servidor** ni queda almacenado en ningún lugar: al cerrar la ventana, no queda copia.
 </Note>
 
-## Qué hace el botón "Directrices desde bases (IA)"
+## Qué hace el asistente
 
 El asistente realiza tres tareas de forma automática al abrir el archivo `.docx`:
 
@@ -30,18 +30,28 @@ El asistente realiza tres tareas de forma automática al abrir el archivo `.docx
 
 <Steps>
   <Step title="Abrir el asistente y cargar el archivo">
-    Haga clic en el botón violeta **Directrices desde bases (IA)** ubicado en la pantalla principal del Generador de Evaluaciones. En el selector de archivos que aparece, elija el archivo `.docx` que contiene las bases del llamado.
+    En el **Panel de Administración** (`admin.html`), haga clic en el botón **✨ Asistente de bases** ubicado en la barra superior. En el selector de archivos que aparece, elija el archivo `.docx` que contiene las bases del llamado.
 
     <Warning>
       El asistente solo acepta archivos con extensión `.docx`. Los formatos `.doc` (Word 97-2003) y `.pdf` **no son compatibles** y provocarán un error de lectura.
     </Warning>
   </Step>
 
-  <Step title="Revisar los datos detectados automáticamente">
-    El asistente completa de forma automática los siguientes campos a partir del texto del documento:
+  <Step title="Seleccionar qué generar">
+    Antes de cargar el archivo, elija qué quiere que proponga la IA:
 
-    - **Cargo del llamado** y **Área**: detectados por búsqueda de patrones en el texto (p. ej. "cargo de …" o "área de …") y por comparación con el catálogo existente.
-    - **Competencias detectadas**: aparecen como casillas de verificación pre-marcadas, tomadas de una lista de 12 competencias estándar. Cada una se activa si su patrón aparece en el texto de las bases. Puede marcar o desmarcar libremente.
+    - **Área, cargo y dinámicas** — todo es nuevo en el catálogo.
+    - **Cargo y dinámicas** — el área ya existe.
+    - **Solo dinámicas** — el área y el cargo ya existen.
+
+    Si eligió la segunda o tercera opción, seleccione el área (y el cargo, si corresponde) de las listas desplegables.
+  </Step>
+
+  <Step title="Revisar los datos detectados automáticamente">
+    Al cargar el `.docx`, el asistente completa de forma automática los siguientes campos a partir del texto del documento:
+
+    - **Cargo del llamado** y **Área**: detectados por búsqueda de patrones en el texto (p. ej. «cargo de …» o «área de …») y por comparación con el catálogo existente.
+    - **Competencias detectadas**: casillas de verificación pre-marcadas a partir de una lista de 12 competencias estándar predefinidas. Cada una se activa si su patrón aparece en el texto de las bases. Puede marcar o desmarcar libremente.
     - **Tareas típicas**: hasta 12 líneas extraídas de secciones con títulos *Funciones*, *Tareas*, *Cometidos* o *Responsabilidades*. Puede editarlas o eliminar las que no quiera incluir en el prompt.
 
     Debajo de los campos **Cargo** y **Área** aparece un indicador de estado:
@@ -53,7 +63,7 @@ El asistente realiza tres tareas de forma automática al abrir el archivo `.docx
     | 💡 Sugerencia | Se encontró una entrada **similar** en el catálogo. Aparecen los botones **Usar existente** y **Crear nuevo** para decidir. |
 
     <Warning>
-      **Revise siempre el campo Cargo.** A veces el asistente captura palabras de más: por ejemplo, puede detectar "Tesorero del área de Finanzas" cuando el nombre correcto del cargo es simplemente "Tesorero". Corrija el campo antes de continuar.
+      **Revise siempre el campo Cargo.** A veces el asistente captura palabras de más: por ejemplo, puede detectar «Tesorero del área de Finanzas» cuando el nombre correcto del cargo es simplemente «Tesorero». Corrija el campo antes de continuar.
     </Warning>
   </Step>
 
@@ -67,14 +77,16 @@ El asistente realiza tres tareas de forma automática al abrir el archivo `.docx
     Presione el botón **Generar prompt**. El texto resultante aparecerá en el área de vista previa. Léalo: verá únicamente datos del perfil del cargo (nombre, área, competencias y tareas genéricas), sin ninguna referencia identificatoria a la organización o al llamado.
 
     Una vez conforme, presione **Copiar** para copiar el texto al portapapeles.
+
+    <Tip>
+      El propio prompt ya le indica a la IA que diseñe las dinámicas sin nombres reales ni datos de organismos, lo que refuerza la anonimización a nivel de las respuestas generadas.
+    </Tip>
   </Step>
 
   <Step title="Pegar en la inteligencia artificial de su elección">
     Abra la herramienta de IA que prefiera —ChatGPT, Microsoft Copilot, Google Gemini u otra— y pegue el prompt en el campo de chat. La IA devolverá su respuesta con las dinámicas propuestas.
 
-    <Tip>
-      El propio prompt ya le indica a la IA que diseñe las dinámicas "sin nombres reales ni datos de organismos", lo que refuerza la anonimización a nivel de las respuestas generadas.
-    </Tip>
+    El prompt **no se envía automáticamente**: solo llega a la IA si usted lo copia y lo pega.
   </Step>
 </Steps>
 
@@ -82,7 +94,7 @@ El asistente realiza tres tareas de forma automática al abrir el archivo `.docx
 
 La respuesta de la inteligencia artificial incluirá:
 
-- **4 dinámicas nuevas** en bloques JSON listos para pegar en `dinamicas.json`.
+- **Dinámicas nuevas** (por defecto 4) en bloques JSON listos para incorporar a `dinamicas.json`.
 - Si el cargo no existía en el catálogo: un objeto **cargo** listo para pegar en `cargos.json`.
 - Si el área tampoco existía: un objeto **área** listo para pegar en `areas.json`.
 
@@ -98,6 +110,6 @@ Cada bloque indica exactamente en qué archivo debe pegarse. Lleve esa respuesta
   El asistente utiliza **Mammoth.js 1.6.0**, una biblioteca de código abierto para leer archivos `.docx` directamente en el navegador. Esta biblioteca se carga desde [cdnjs.cloudflare.com](https://cdnjs.cloudflare.com) la primera vez que se usa el asistente en cada sesión.
 
   - **Requiere acceso a Internet** en el momento de cargar el archivo (solo para descargar la biblioteca; el documento en sí nunca sale de la computadora).
-  - Si aparece el mensaje *"No se pudo cargar el lector de .docx"*, verifique su conexión a Internet o consulte al responsable técnico para alojar Mammoth.js localmente.
+  - Si aparece el mensaje *«No se pudo cargar el lector de .docx»*, verifique su conexión a Internet o consulte al responsable técnico para alojar Mammoth.js localmente y apuntar la constante `MAMMOTH` en `administracion.js` a la ruta local.
   - Solo se admiten archivos `.docx` (Word 2007 o posterior). Los archivos `.doc` y `.pdf` no son compatibles.
 </Accordion>

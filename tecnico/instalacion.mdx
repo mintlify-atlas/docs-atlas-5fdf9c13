@@ -1,14 +1,14 @@
 ---
-title: "Instalación y ejecución del Gestor de Pruebas para Llamados"
+title: "Instalar y desplegar el Gestor de Pruebas para Llamados"
 sidebarTitle: "Instalación"
-description: "Cómo ejecutar el Gestor de Pruebas localmente con Netlify CLI o un servidor HTTP, y cómo publicarlo en Netlify u otro hosting estático."
+description: "Cómo ejecutar el Gestor de Pruebas con Netlify CLI o un servidor HTTP, y publicarlo en producción sobre Netlify sin ningún paso de compilación."
 ---
 
 El Gestor de Pruebas para Llamados es una aplicación web compuesta íntegramente por HTML, CSS y JavaScript, sin ningún paso de compilación. Sin embargo, su arquitectura requiere dos condiciones para funcionar correctamente: los archivos deben servirse a través de HTTP (no abrirse directamente desde el sistema de archivos) y, para la lectura y escritura de datos, debe estar disponible la función serverless de Netlify `netlify/functions/pruebas.js`. Esta página explica todas las opciones de ejecución local y producción, sus limitaciones y el proceso de configuración inicial del repositorio de datos.
 
 ## Requisito fundamental: servidor HTTP
 
-La capa de datos (`datos/datos.js`) obtiene los tres catálogos JSON (`areas.json`, `cargos.json`, `dinamicas.json`) mediante `fetch()`. Los navegadores modernos **bloquean `fetch` sobre el protocolo `file://`**, por lo que abrir `index.html` con doble clic desde el explorador de archivos no es una opción válida.
+La capa de datos (`datos/datos.js`) se comunica con el servidor a través de `fetch()`, llamando al endpoint `/.netlify/functions/pruebas`. Los navegadores modernos **bloquean `fetch` sobre el protocolo `file://`**, por lo que abrir `index.html` con doble clic desde el explorador de archivos no es una opción válida.
 
 <Warning>
 Si se intenta abrir la aplicación directamente desde el sistema de archivos, aparecerá la alerta:
@@ -89,9 +89,9 @@ Netlify es la plataforma de referencia para este proyecto. No se requiere ningú
     |---|---|
     | Base directory | *(vacío)* |
     | Build command | *(vacío — no hay build)* |
-    | Publish directory | `/` |
+    | Publish directory | *(vacío — Netlify usa la raíz por defecto)* |
 
-    La función en `netlify/functions/pruebas.js` se detecta y despliega automáticamente.
+    El archivo `netlify.toml` del proyecto no define ninguna sección `[build]`; Netlify publica desde la raíz del repositorio sin ningún comando de construcción. La función en `netlify/functions/pruebas.js` se detecta y despliega automáticamente.
   </Step>
   <Step title="Configurar las variables de entorno">
     Ve a **Site settings → Environment variables** y agrega las dos variables requeridas. Consulta la página [Variables de Entorno](/tecnico/variables-entorno) para el detalle de cada una.
