@@ -1,0 +1,107 @@
+---
+title: "Crear y gestionar áreas y cargos en el Panel de Administración"
+sidebarTitle: "Áreas y Cargos"
+description: "Aprende a crear áreas organizativas y cargos desde el Panel de Administración, con sus siglas, códigos autogenerados y competencias."
+---
+
+El Panel de Administración es el lugar donde se mantiene el catálogo de la herramienta: las **áreas** organizativas, los **cargos** que pertenecen a cada área y las dinámicas que se aplican en cada evaluación. Las áreas y los cargos son la estructura base de todo el sistema — sin ellos no puede haber dinámicas ni evaluaciones. Esta página explica cómo crearlos correctamente, qué códigos genera la herramienta en forma automática y cuáles son las operaciones que todavía requieren edición manual de los archivos JSON.
+
+## Acceder al Panel de Administración
+
+Desde la pantalla principal del Generador de Evaluaciones, presione el botón **⚙️ Administrar Datos** que aparece en la parte superior. Para regresar al generador en cualquier momento, presione **⬅️ Volver al Generador**.
+
+<Warning>
+Todo lo que agregue o cambie en el Panel de Administración se guarda **únicamente en la memoria del navegador**. Si recarga la página o cierra la pestaña antes de exportar o guardar los cambios, **se pierde todo**. Al terminar de trabajar, siga siempre los pasos de la sección [Guardar Cambios](/admin/guardar-cambios).
+</Warning>
+
+---
+
+## Crear un área
+
+Las **áreas** representan los sectores de la organización (por ejemplo, Operativa, Administración, Finanzas). Cada área se identifica por una sigla de tres letras que forma parte de los códigos de cargos y dinámicas.
+
+<Steps>
+  <Step title="Abrir el formulario">
+    En el Panel de Administración, presione el botón **+ Crear Nueva Área**.
+  </Step>
+  <Step title="Ingresar el nombre">
+    Escriba el nombre completo del área, por ejemplo: `Tecnología y Sistemas`.
+  </Step>
+  <Step title="Ingresar la sigla">
+    Escriba una **sigla de exactamente 3 letras**, por ejemplo: `TEC`. La herramienta la convierte a mayúsculas automáticamente. La sigla debe ser única — si ya existe un área con esa sigla, el sistema mostrará un error.
+  </Step>
+  <Step title="Guardar">
+    Presione **Guardar Área**. El área nueva aparecerá de inmediato en la lista.
+  </Step>
+</Steps>
+
+### Código del área
+
+El código de un área es simplemente su **sigla de 3 letras** (p. ej. `TEC`). Este valor se usa como componente en los códigos de cargos y dinámicas, pero el área en sí no tiene un código adicional.
+
+---
+
+## Crear un cargo
+
+Los **cargos** son los puestos a los que se puede postular (por ejemplo, Administrativo, Contador, Encargado). Cada cargo pertenece a un área y recibe un código autogenerado.
+
+<Steps>
+  <Step title="Abrir el formulario">
+    Presione el botón **+ Crear Nuevo Cargo**.
+  </Step>
+  <Step title="Ingresar el nombre del cargo">
+    Escriba el nombre del puesto, por ejemplo: `Desarrollador de Software`.
+  </Step>
+  <Step title="Elegir el área">
+    Seleccione el área a la que pertenece el cargo en el selector desplegable.
+  </Step>
+  <Step title="Ingresar la sigla de especialidad">
+    Escriba una sigla de **hasta 3 letras** que identifique la especialidad dentro del área, por ejemplo: `DEV`. Si ingresa menos de 3 letras, la herramienta completa con `X` (p. ej., `DE` → `DEX`).
+  </Step>
+  <Step title="Crear el cargo">
+    Presione **Crear Cargo**. El código se genera solo.
+  </Step>
+</Steps>
+
+### Formato del código de cargo
+
+El código sigue el patrón `CAR-<área>-<esp>-<NN>`, donde:
+
+| Componente | Descripción | Ejemplo |
+|---|---|---|
+| `CAR` | Prefijo fijo para todos los cargos | `CAR` |
+| `<área>` | Sigla de 3 letras del área | `TEC` |
+| `<esp>` | Sigla de especialidad de hasta 3 letras | `DEV` |
+| `<NN>` | Número correlativo de 2 dígitos, calculado automáticamente | `01` |
+
+Por ejemplo, el primer cargo de especialidad `DEV` en el área `TEC` recibirá el código `CAR-TEC-DEV-01`. Si ya existiera ese código, el siguiente sería `CAR-TEC-DEV-02`.
+
+<Note>
+El número `NN` se calcula tomando el mayor número existente con el mismo prefijo (`CAR-TEC-DEV-`) y sumándole 1. Si no existe ningún cargo con ese prefijo, el primero recibe `01`.
+</Note>
+
+### Competencias del cargo nuevo
+
+Todo cargo creado desde el panel se genera con **dos competencias de ejemplo**. Estas competencias definen las columnas de la tabla de puntaje en las evaluaciones. Para reemplazarlas por las competencias reales del puesto, es necesario editar el archivo `cargos.json` directamente — esta es una tarea del administrador técnico.
+
+---
+
+## Limitaciones del panel
+
+Algunas operaciones no están disponibles desde la interfaz del panel y requieren editar los archivos JSON en forma manual:
+
+| Operación | ¿Desde el panel? | Alternativa |
+|---|---|---|
+| Crear un área nueva | ✅ Sí | — |
+| Crear un cargo nuevo | ✅ Sí | — |
+| Crear y editar dinámicas | ✅ Sí | — |
+| Definir o modificar competencias de un cargo | ❌ No | Editar `cargos.json` manualmente |
+| Renombrar un área existente | ❌ No | Editar `areas.json` manualmente |
+| Eliminar un área existente | ❌ No | Editar `areas.json` manualmente |
+| Renombrar un cargo existente | ❌ No | Editar `cargos.json` manualmente |
+| Eliminar un cargo existente | ❌ No | Editar `cargos.json` manualmente |
+| Corregir el `cargo_id` de una dinámica | ❌ No | Editar `dinamicas.json` manualmente |
+
+<Note>
+Las operaciones de renombrado y eliminación de áreas y cargos existentes deben realizarlas el **administrador técnico** editando directamente los archivos JSON en la carpeta `datos/` del repositorio. Consulte el Manual Técnico para más detalles.
+</Note>

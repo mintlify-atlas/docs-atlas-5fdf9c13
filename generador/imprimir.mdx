@@ -1,0 +1,92 @@
+---
+title: "Imprimir o guardar en PDF la evaluación generada"
+sidebarTitle: "Imprimir"
+description: "Cómo imprimir el paquete de evaluación en A4, exportar a PDF, y configurar los gráficos de fondo para mantener los colores en la impresión."
+---
+
+Una vez generado el formulario, la herramienta pone a disposición el botón **Imprimir Formulario** que abre directamente el diálogo de impresión del navegador. El resultado es un documento limpio en A4: solo el informe del evaluador y las hojas de trabajo de los postulantes, sin botones, selectores ni ningún elemento de la interfaz. Desde ese mismo diálogo también puede exportar el paquete completo a PDF para archivarlo o compartirlo de forma digital.
+
+---
+
+## El botón Imprimir Formulario
+
+Presione **Imprimir Formulario** en la barra de controles del generador para abrir el diálogo de impresión del navegador. La interfaz —botones, interruptores, selectores de cargo y dinámicas— **no forma parte del documento impreso**; solo se imprime el contenido del informe generado.
+
+<Note>
+  El botón **Imprimir Formulario** solo está disponible después de presionar **Generar Formulario**. Si la selección se modificó y el formulario fue borrado, primero regenere el informe.
+</Note>
+
+---
+
+## Configuración de página A4
+
+El informe está diseñado para hoja **A4** con márgenes de 15 mm en todos los lados. Estas propiedades están definidas en la regla CSS `@page`:
+
+```css
+@page {
+  size: A4;
+  margin: 15mm;
+}
+```
+
+La propiedad `print-color-adjust: exact` instruye al navegador para que respete los colores de fondo y los bordes de los recuadros exactamente como se definen en los estilos, sin simplificarlos para ahorrar tinta.
+
+### Saltos de página por postulante
+
+Cada hoja de trabajo de candidato (elemento con clase `.candidate-sheet`) fuerza un salto de página antes de su contenido. Esto garantiza que, sin importar cuánto ocupe el informe del evaluador, cada hoja de postulante siempre comience en una página nueva y no quede partida a la mitad.
+
+---
+
+## Guardar como PDF
+
+Para obtener un archivo PDF en lugar de enviar el documento a una impresora física:
+
+1. Presione **Imprimir Formulario**.
+2. En el diálogo de impresión, seleccione **Guardar como PDF** (o "Microsoft Print to PDF" en Windows) como destino.
+3. Elija la carpeta y el nombre del archivo, y confirme.
+
+El PDF resultante contiene exactamente lo que vería en papel: informe del evaluador, tablas de puntaje y hojas de trabajo, paginadas en A4.
+
+<Warning>
+  Sin la opción **Gráficos de fondo** activada en el diálogo de impresión, los recuadros de colores del informe —que destacan el tiempo límite, el objetivo, la guía de observación y el corrector— se imprimirán en blanco, perdiendo la diferenciación visual entre secciones. Antes de imprimir o exportar a PDF, asegúrese de activar **Gráficos de fondo** (en Chrome y Edge se llama *Background graphics*; en Firefox, *Print backgrounds*).
+</Warning>
+
+---
+
+## Flujo técnico de impresión
+
+Imprimir desde dentro de un elemento `<dialog>` del navegador puede generar una página en blanco inicial o perder parte del contenido. Para evitarlo, la herramienta intercepta el evento de impresión y copia el informe fuera del modal antes de que el navegador procese la hoja.
+
+Cuando el usuario presiona **Imprimir Formulario** o usa el atajo de teclado **Ctrl + P** (con el informe visible), se dispara el evento `beforeprint`. En ese momento, la función `preparaImpresion()` copia el HTML del informe al contenedor `#zonaImpresion`, que vive fuera del diálogo modal y sí es accesible al motor de impresión:
+
+```js
+const preparaImpresion = () => {
+  const z = $('#zonaImpresion');
+  z.className = 'print-container' + (S.guia ? '' : ' ocultar-guia');
+  z.innerHTML = $('#hoja').innerHTML;
+};
+
+window.addEventListener('beforeprint', () => {
+  if ($('#dInf').open) preparaImpresion();
+});
+
+window.addEventListener('afterprint', () => {
+  $('#zonaImpresion').innerHTML = '';
+});
+```
+
+El estado del interruptor **Guía y corrector** se respeta en este proceso: si el interruptor está apagado al momento de imprimir, la clase `ocultar-guia` se aplica también al contenedor de impresión.
+
+Una vez que el diálogo de impresión se cierra (evento `afterprint`), el contenido copiado se elimina del DOM para mantener el documento limpio.
+
+---
+
+## Consejos de impresión
+
+<Tip>
+  Si necesita distribuir únicamente las **hojas de trabajo** a los candidatos sin que vean el informe del evaluador, apague el interruptor **Guía y corrector** antes de imprimir. Obtendrá un documento donde los bloques de guía y corrector no aparecen; luego puede entregar esas hojas con tranquilidad sabiendo que las respuestas esperadas no están a la vista.
+</Tip>
+
+<Tip>
+  Para imprimir solo una parte del paquete (por ejemplo, las hojas de un candidato específico), use la opción **Páginas** del diálogo de impresión e indique el rango de páginas que desea. Primero revise el documento en la **Vista previa** del diálogo para identificar en qué páginas se encuentran las hojas que necesita.
+</Tip>

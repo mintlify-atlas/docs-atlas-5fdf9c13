@@ -1,72 +1,101 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Gestor de Pruebas para Llamados",
+  "theme": "almond",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
-  },
-  "favicon": "/favicon.svg",
-  "navigation": {
-    "pages": [
-      {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "primary": "#6B4FBB",
+    "light": "#EDE9F8",
+    "dark": "#3D2A7A"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:support@mintlify.com"
-      }
-    ],
     "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "type": "github",
+      "href": "https://github.com/FABIOR1981/gestor_pruebas_llamados"
     }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/FABIOR1981/gestor_pruebas_llamados"
     }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guía de Uso",
+        "groups": [
+          {
+            "group": "Introducción",
+            "pages": [
+              "introduccion",
+              "conceptos-clave",
+              "pantallas"
+            ]
+          },
+          {
+            "group": "Generador de Evaluaciones",
+            "pages": [
+              "generador/armar-evaluacion",
+              "generador/guia-corrector",
+              "generador/imprimir"
+            ]
+          },
+          {
+            "group": "Panel de Administración",
+            "pages": [
+              "admin/areas-y-cargos",
+              "admin/dinamicas",
+              "admin/guardar-cambios"
+            ]
+          },
+          {
+            "group": "Asistente IA",
+            "pages": [
+              "ia/como-funciona",
+              "ia/confidencialidad",
+              "ia/incorporar-respuesta"
+            ]
+          },
+          {
+            "group": "Resolución de Problemas",
+            "pages": [
+              "soporte/problemas-frecuentes"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Referencia Técnica",
+        "groups": [
+          {
+            "group": "Arquitectura",
+            "pages": [
+              "tecnico/arquitectura",
+              "tecnico/estructura-proyecto"
+            ]
+          },
+          {
+            "group": "Modelo de Datos",
+            "pages": [
+              "tecnico/modelo-datos",
+              "tecnico/catalogo-incluido"
+            ]
+          },
+          {
+            "group": "Instalación y Despliegue",
+            "pages": [
+              "tecnico/instalacion",
+              "tecnico/variables-entorno"
+            ]
+          },
+          {
+            "group": "API del Servidor",
+            "pages": [
+              "tecnico/api-netlify",
+              "tecnico/informes-guardados"
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

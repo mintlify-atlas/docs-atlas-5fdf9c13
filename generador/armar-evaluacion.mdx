@@ -1,0 +1,128 @@
+---
+title: "Cómo armar una evaluación psicotécnica con el Generador"
+sidebarTitle: "Armar Evaluación"
+description: "Guía paso a paso para seleccionar cargo, postulantes y dinámicas, y generar el paquete completo de evaluación listo para imprimir."
+---
+
+El **Generador de Evaluaciones** es la pantalla principal de la herramienta. Partiendo de la selección de un cargo, una cantidad de postulantes y las dinámicas a aplicar, la app construye en segundos un paquete completo: el informe del evaluador con guía y corrector, la tabla de puntaje de cada postulante y las hojas de trabajo para entregar a los candidatos. Todo queda listo para revisar en pantalla e imprimir en A4 con un solo clic.
+
+## Paso a paso
+
+<Steps>
+  <Step title="Elegir el cargo">
+    En el selector **Puesto / Cargo**, elija el cargo correspondiente al llamado. La herramienta muestra primero las **áreas** disponibles; al seleccionar una, aparecen los cargos activos de esa área. Cada botón de cargo indica la cantidad de dinámicas y competencias que tiene asignadas, y su código identificador (por ejemplo, `CAR-ADM-GEN-01`).
+  </Step>
+  <Step title="Indicar la cantidad de postulantes">
+    Use los botones **−** y **+** junto al contador de **Postulantes** para fijar cuántas personas van a evaluarse en la sesión. El rango válido es de **1 a 10**. La app generará una tabla de puntaje y un juego completo de hojas de trabajo para cada postulante.
+  </Step>
+  <Step title="Marcar las dinámicas a aplicar">
+    En la sección **Dinámicas a aplicar** aparecen únicamente las dinámicas asociadas al cargo elegido. Cada tarjeta muestra el título, una descripción breve, el código de la dinámica (por ejemplo, `DIN-ADM-GEN-03`) y el tiempo estimado en minutos.
+
+    - Puede seleccionar **una o varias** dinámicas marcando sus casillas.
+    - Cuando hay más de una dinámica seleccionada, el panel lateral muestra el **tiempo total estimado** sumando los minutos de cada prueba.
+    - Use el botón **Seleccionar todas / Quitar todas** para gestionar la selección de forma rápida.
+    - Si desea ver el detalle completo de una dinámica antes de incluirla, presione **Ver detalle** en su tarjeta.
+
+    <Note>
+      El tiempo estimado se puede ajustar manualmente en el campo de minutos del panel lateral. Si la selección cambia, el campo vuelve al valor calculado automáticamente. Use el botón de reset (↺) para restaurar el cálculo en cualquier momento.
+    </Note>
+  </Step>
+  <Step title="Presionar Generar Formulario">
+    Una vez definidos cargo, postulantes y dinámicas, presione el botón **Generar Formulario**. La app abre un cuadro donde puede confirmar el nombre del llamado, la fecha de evaluación y —si el sistema requiere contraseña— la clave de acceso. Al aceptar, el informe completo se despliega en pantalla.
+  </Step>
+  <Step title="Revisar e imprimir">
+    Revise el formulario generado en pantalla. Cuando esté conforme, presione **Imprimir Formulario** para abrir el diálogo de impresión del navegador. Los controles, botones y selectores de la interfaz **no se imprimen**; solo el informe y las hojas de trabajo.
+  </Step>
+</Steps>
+
+<Warning>
+  Si después de generar el formulario cambia el cargo o marca/desmarca alguna dinámica, el formulario que se muestra en pantalla **se borra** y aparece el aviso: *"Selección modificada. Presione 'Generar Formulario' para actualizar los datos."* Esto evita imprimir material mezclado o desactualizado. Simplemente vuelva a presionar **Generar Formulario** para regenerar el paquete con la nueva selección.
+</Warning>
+
+---
+
+## Qué contiene el formulario generado
+
+El formulario tiene tres secciones principales seguidas de las hojas de trabajo de los candidatos.
+
+### Encabezado
+
+En la parte superior aparece el título **INFORME DE EVALUACIÓN PSICOTÉCNICA** junto al nombre del llamado y el código del cargo. Incluye espacios en blanco para completar a mano la **Fecha de evaluación** y el nombre del **Evaluador(a)**.
+
+### Sección 1 — Dinámicas de evaluación seleccionadas
+
+Por cada dinámica marcada, el informe incluye:
+
+<CardGroup cols={2}>
+  <Card title="Identificación" icon="tag">
+    Título completo y código único de la dinámica (por ejemplo, `DIN-ADM-GEN-03`).
+  </Card>
+  <Card title="Descripción y tiempo" icon="clock">
+    Descripción breve de la prueba y el tiempo límite en minutos.
+  </Card>
+  <Card title="Objetivo" icon="bullseye">
+    Consigna para el evaluador: qué mide la dinámica y qué se espera observar.
+  </Card>
+  <Card title="Guía y corrector" icon="magnifying-glass">
+    Guía de observación con indicadores de éxito y alerta, más las respuestas correctas o esperadas (ocultables con el interruptor **Guía y corrector**).
+  </Card>
+</CardGroup>
+
+Si se seleccionaron dos o más dinámicas, al final de esta sección aparece el **tiempo total estimado** de la sesión.
+
+### Sección 2 — Evaluación y puntaje por postulante
+
+Primero se listan las **competencias a observar** del cargo, con su código, nombre y descripción. Luego, por cada postulante, se genera una tabla de puntaje con la siguiente estructura:
+
+- Cada **fila** corresponde a una dinámica (D1, D2, …).
+- Cada **columna** corresponde a una competencia del cargo.
+- Las celdas se puntúan en escala **de 0 a 5**.
+- La columna **Sub total** suma los puntos de todas las competencias en esa dinámica.
+- La fila **TOTAL** suma los puntos de cada competencia en todas las dinámicas.
+- La fila **PUNTAJE FINAL** normaliza el resultado sobre **30 puntos** usando la fórmula calculada automáticamente.
+
+Debajo de la tabla hay un recuadro de **Observaciones y notas de conducta** del postulante.
+
+#### Ejemplo de cálculo de puntaje
+
+Con **3 competencias** y **2 dinámicas**, la escala resulta así:
+
+| Concepto | Máximo |
+|---|---|
+| Cada competencia por dinámica | 5 puntos |
+| Cada dinámica (3 competencias × 5) | 15 puntos |
+| Cada competencia en ambas dinámicas (2 × 5) | 10 puntos |
+| Total general (3 competencias × 2 dinámicas × 5) | 30 puntos |
+
+### Sección 3 — Conclusión y dictamen general
+
+Espacio para marcar el dictamen final del postulante:
+
+- **Apto**
+- **Apto con reservas**
+- **No apto**
+
+Incluye un campo de texto para comentarios finales.
+
+### Hojas de trabajo del postulante
+
+Al final del formulario se generan las hojas para entregar a los candidatos: **una hoja por cada dinámica y por cada postulante**. Cada hoja contiene:
+
+- Campo para **Nombre del Postulante** y **Fecha**.
+- **Código de la dinámica** y **tiempo límite**.
+- **Consigna** completa tal como la leerá el candidato.
+- Renglones en blanco para escribir las respuestas (la cantidad se configura en cada dinámica, de 0 a 30 líneas).
+
+Al imprimir, cada hoja de postulante fuerza un **salto de página** para que salga en su propia hoja A4.
+
+---
+
+## Cómo se extrae el tiempo de cada dinámica
+
+La función `mins()` analiza el campo **Tiempo Límite** de cada dinámica: toma todos los números que encuentre en el texto y devuelve el mayor. Esto permite manejar rangos de tiempo escritos en lenguaje natural.
+
+**Ejemplo:** el texto *"Aprox. 5 a 8 minutos"* contiene los números 5 y 8; la función devuelve **8 minutos** como valor a sumar al tiempo total estimado. Un campo con valor `"0"` o vacío se trata como *sin tiempo definido* y no aporta al cálculo.
+
+<Note>
+  Si el tiempo calculado automáticamente no refleja la duración real de la sesión (por ejemplo, porque incluye pausas o el evaluador necesita más margen), puede ajustarlo manualmente en el campo de minutos del panel lateral antes de generar el formulario.
+</Note>

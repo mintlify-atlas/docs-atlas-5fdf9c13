@@ -1,0 +1,104 @@
+---
+title: "Crear, editar y borrar dinámicas en el Panel de Administración"
+sidebarTitle: "Dinámicas"
+description: "Gestiona el catálogo de dinámicas (pruebas psicotécnicas) para cada cargo: alta, edición de campos, duplicación y eliminación."
+---
+
+Las **dinámicas** son las pruebas o ejercicios prácticos que se aplican a los postulantes durante un proceso de selección. Cada dinámica pertenece a un cargo específico y contiene toda la información necesaria para llevar adelante la evaluación: la consigna que ve el candidato, las instrucciones y la guía para el evaluador, el tiempo límite y el corrector con las respuestas esperadas. Desde el Panel de Administración se pueden crear, editar y eliminar dinámicas sin necesidad de tocar los archivos JSON directamente.
+
+## Seleccionar el cargo
+
+Antes de trabajar con dinámicas, debe indicar a qué cargo pertenecen. En la parte superior del panel, utilice el selector desplegable **Seleccionar Cargo a Administrar** para elegir el cargo deseado. Una vez seleccionado, aparecerán las dinámicas existentes para ese cargo y se habilitará el botón para crear dinámicas nuevas.
+
+---
+
+## Crear una dinámica nueva
+
+<Steps>
+  <Step title="Seleccionar el cargo objetivo">
+    Asegúrese de haber elegido el cargo correcto en el selector **Seleccionar Cargo a Administrar**.
+  </Step>
+  <Step title="Abrir el formulario">
+    Presione el botón **+ Nueva Dinámica**. Se abrirá el formulario de alta.
+  </Step>
+  <Step title="Completar el formulario">
+    Complete todos los campos según la tabla de referencia que aparece más abajo.
+  </Step>
+  <Step title="Guardar">
+    Presione **Guardar Dinámica**. La nueva dinámica aparecerá en la lista con su código autogenerado.
+  </Step>
+</Steps>
+
+### Campos del formulario
+
+| Campo | Qué escribir |
+|---|---|
+| **Cargo Objetivo** | El cargo al que pertenece la prueba. Ya viene seleccionado según la elección del panel; no es necesario modificarlo. |
+| **Código** | Se completa solo. No es editable. Vea el formato más abajo. |
+| **Título de la Dinámica** | Nombre corto que identifica la prueba, por ejemplo: `Redacción de Informe` o `Análisis de Caso`. |
+| **Descripción Breve** | En qué consiste la prueba, en una sola línea. Aparece en el informe del evaluador. |
+| **Tiempo Límite** | Texto libre que indica la duración, por ejemplo: `3 Minutos Exactos` o `Aprox. 5 a 8 minutos`. Los números que figuren en este campo se usan para calcular el tiempo total de la evaluación. |
+| **Hoja de Trabajo / Consigna para el Postulante** | El texto completo que leerá el candidato. Los saltos de línea se respetan en la impresión. |
+| **Renglones para escribir** | Cantidad de líneas en blanco que aparecerán debajo de la consigna en la hoja del postulante. Acepta valores de `0` a `30`. |
+| **Objetivo / Consigna para el Evaluador** | Qué mide o evalúa esta prueba. Se incluye en el informe del evaluador. |
+| **Guía de Observación** | Criterios de evaluación del desempeño. Se recomienda el formato: `• Éxito: …` en una línea y `• Alerta: …` en otra. |
+| **Corrector** | La respuesta correcta o esperada para la prueba. Es opcional; si se deja vacío no aparece en el informe. |
+
+### Formato del código de dinámica
+
+El código sigue el patrón `DIN-<área>-<esp>-<NN>`, donde el prefijo se toma directamente del código del cargo seleccionado:
+
+| Cargo seleccionado | Prefijo de la dinámica | Primer código |
+|---|---|---|
+| `CAR-TEC-DEV-01` | `DIN-TEC-DEV-` | `DIN-TEC-DEV-01` |
+| `CAR-ADM-GEN-01` | `DIN-ADM-GEN-` | `DIN-ADM-GEN-01` |
+| `CAR-FIN-CON-01` | `DIN-FIN-CON-` | `DIN-FIN-CON-01` |
+
+El número correlativo `NN` se calcula tomando el mayor número ya existente entre todas las dinámicas con ese mismo prefijo y sumándole 1. Si no existe ninguna dinámica con ese prefijo, la primera recibe `01`.
+
+<Tip>
+Para cargar varias dinámicas seguidas de un mismo cargo, deje el formulario abierto y presione **Guardar Dinámica** al terminar cada una. El código se incrementa automáticamente en cada guardado, lo que permite crear múltiples pruebas en secuencia sin interrupciones.
+</Tip>
+
+---
+
+## Editar una dinámica existente
+
+<Steps>
+  <Step title="Localizar la dinámica">
+    En la lista de dinámicas del cargo seleccionado, ubique la que desea modificar.
+  </Step>
+  <Step title="Abrir el formulario de edición">
+    Presione el botón **✏️ Editar** en la tarjeta de la dinámica.
+  </Step>
+  <Step title="Realizar los cambios">
+    Modifique los campos que necesite. Todos los campos son editables, excepto el código.
+  </Step>
+  <Step title="Guardar">
+    Presione **Guardar Dinámica** para confirmar los cambios.
+  </Step>
+</Steps>
+
+<Note>
+El **código de una dinámica no cambia** al editar, aunque se modifique el campo de cargo objetivo. Si una dinámica pertenece en realidad a otro cargo, la forma correcta de proceder es crearla de nuevo en el cargo destino y luego eliminar la original. No es posible reasignar una dinámica a otro cargo simplemente editándola.
+</Note>
+
+---
+
+## Eliminar una dinámica
+
+<Steps>
+  <Step title="Localizar la dinámica">
+    En la lista de dinámicas, ubique la que desea eliminar.
+  </Step>
+  <Step title="Presionar el botón de borrado">
+    Presione el botón **🗑️ Borrar** en la tarjeta de la dinámica.
+  </Step>
+  <Step title="Confirmar la eliminación">
+    Confirme la operación en el diálogo que aparece. La dinámica se elimina de la lista de inmediato.
+  </Step>
+</Steps>
+
+<Warning>
+La eliminación solo afecta el estado en memoria del navegador. Para que el cambio sea permanente y la dinámica deje de aparecer para todos los usuarios, es necesario **guardar los cambios** después de borrar. Consulte la página [Guardar Cambios](/admin/guardar-cambios) para ver cómo exportar o publicar los archivos actualizados.
+</Warning>

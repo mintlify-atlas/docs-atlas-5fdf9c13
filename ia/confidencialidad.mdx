@@ -1,0 +1,105 @@
+---
+title: "Confidencialidad de las bases del llamado en el Asistente IA"
+sidebarTitle: "Confidencialidad"
+description: "Cinco capas de protección garantizan que datos sensibles de la empresa, clientes y llamado no lleguen a la IA al generar dinámicas."
+---
+
+Las bases de un llamado suelen contener información sensible: el nombre de la organización o de la consultora que las redactó, sus clientes, responsables, números de llamado, fechas, remuneraciones y datos de contacto. El Asistente IA está diseñado desde su origen para que **nada de eso llegue a la inteligencia artificial**. El archivo de bases nunca sale de la computadora del profesional, el texto completo nunca se incluye en el prompt, los datos identificatorios se reemplazan automáticamente y el profesional revisa todo antes de copiarlo. El resultado es un pedido completamente genérico que describe un perfil de puesto, y nada más.
+
+## Garantía central de privacidad
+
+<CardGroup cols={2}>
+  <Card title="El .docx nunca se envía" icon="lock">
+    El documento se lee íntegramente dentro del navegador mediante Mammoth.js. No existe ningún servidor que lo reciba, almacene o procese. Al cerrar la ventana, no queda copia en ningún lado.
+  </Card>
+  <Card title="El texto completo nunca va al prompt" icon="eye-slash">
+    La IA no recibe el documento. Solo recibe cuatro datos del perfil: cargo, área, competencias seleccionadas y hasta 12 tareas típicas. Todo lo demás queda fuera.
+  </Card>
+</CardGroup>
+
+## Las cinco capas de protección
+
+<Steps>
+  <Step title="El archivo nunca se sube a ningún servidor">
+    El documento Word se lee dentro del propio navegador del profesional, utilizando Mammoth.js 1.6.0. La herramienta no tiene backend ni servidor que lo reciba. El archivo no se guarda, no se transmite y, al cerrar la ventana del asistente, no queda ninguna copia.
+  </Step>
+
+  <Step title="Solo se extrae lo indispensable del perfil">
+    El prompt no contiene el texto de las bases. Contiene únicamente cuatro elementos del perfil del cargo:
+
+    | Dato incluido en el prompt | Origen |
+    |---|---|
+    | Nombre del cargo | Campo editable, detectado de las bases |
+    | Área | Campo editable, detectado de las bases |
+    | Competencias seleccionadas | Elegidas de una lista estándar de 12 opciones |
+    | Hasta 12 tareas típicas del puesto | Extraídas de secciones Funciones / Tareas / Cometidos / Responsabilidades |
+
+    Todo lo demás —antecedentes de la organización, condiciones laborales, cronograma, requisitos administrativos, firmas, remuneración— queda completamente fuera del prompt.
+  </Step>
+
+  <Step title="Anonimización automática de patrones identificatorios">
+    En los datos que sí se usan, el asistente aplica reemplazos automáticos antes de armar el prompt:
+
+    | Patrón detectado | Reemplazo |
+    |---|---|
+    | Direcciones de correo electrónico | `[EMAIL]` |
+    | Números de documento (`1.234.567-8`) | `[DOC]` |
+    | Fechas `dd/mm/aaaa` y variantes | `[FECHA]` |
+    | Montos con `$`, `U$S`, `USD`, `UYU` | `[MONTO]` |
+    | "llamado / concurso / licitación" + número | `[LLAMADO]` |
+    | Términos ingresados por el usuario | `[X]` |
+
+    Esta capa actúa sin intervención del profesional, de forma transparente.
+  </Step>
+
+  <Step title="Enmascaramiento definido por el usuario">
+    Los nombres propios —organización, consultora, clientes, marcas, personas— no pueden detectarse automáticamente porque varían en cada llamado. Por eso el asistente ofrece el campo **Términos a enmascarar**: escriba allí, separados por coma, todos los nombres que no deben aparecer. El reemplazo es por `[X]` y es insensible a mayúsculas y minúsculas, por lo que abarca todas las variantes de escritura.
+
+    <Tip>
+      Escriba siempre el nombre de la organización, de la consultora y de los clientes —incluyendo siglas y variantes— en el campo **Términos a enmascarar**. Unos segundos de atención en este paso garantizan que ningún nombre propio llegue al prompt.
+    </Tip>
+  </Step>
+
+  <Step title="El profesional tiene la última palabra antes de enviar">
+    El prompt generado se muestra en un área de texto editable y **no se envía automáticamente** a ninguna IA. Es el profesional quien decide copiarlo y pegarlo. Esto permite:
+
+    - **Revisar** el texto completo antes de que salga de la computadora.
+    - **Corregir** cualquier dato que no se haya anonimizado correctamente.
+    - **Descartar** el prompt si detecta información que no debería compartirse.
+
+    Además, el propio prompt instruye a la IA para que diseñe las dinámicas "sin nombres reales ni datos de organismos", reforzando la privacidad también del lado de la respuesta generada.
+  </Step>
+</Steps>
+
+## Qué llega a la IA y qué nunca llega
+
+| ✅ Llega a la IA (ya anonimizado) | ❌ No llega nunca |
+|---|---|
+| Nombre genérico del cargo (p. ej. "Tesorero") | El archivo de bases y su texto completo |
+| Área (p. ej. "Finanzas") | Nombre de la empresa o consultora que diseñó las bases |
+| Competencias elegidas de una lista estándar | Nombres de clientes, marcas o personas |
+| Hasta 12 tareas típicas, redactadas de forma genérica | Correos, documentos, fechas, montos y números de llamado |
+| Títulos de las dinámicas ya existentes para ese cargo (para no repetirlas) | Datos de los postulantes (la herramienta no los registra) |
+
+## Ejemplo práctico
+
+Suponga que las bases contienen el siguiente texto:
+
+> *"Consultora Andina S.A., por cuenta de su cliente Banco Delta, convoca al Llamado N° 12/2026 para Tesorero; consultas a rrhh@andina.com hasta el 15/11/2026."*
+
+Si el profesional escribe `Consultora Andina, Banco Delta` en el campo **Términos a enmascarar**, el procesamiento es el siguiente:
+
+| Elemento | Tratamiento | Resultado en el prompt |
+|---|---|---|
+| "Consultora Andina S.A." | Enmascarado por término de usuario | `[X] S.A.` → o `[X]` si se ingresa también "S.A." |
+| "Banco Delta" | Enmascarado por término de usuario | `[X]` |
+| "Llamado N° 12/2026" | Anonimizado automáticamente | `[LLAMADO]` |
+| "rrhh@andina.com" | Anonimizado automáticamente | `[EMAIL]` |
+| "15/11/2026" | Anonimizado automáticamente | `[FECHA]` |
+| "Tesorero" | Se incluye como nombre del cargo | `Tesorero` |
+
+Al prompt a la IA solo llega el cargo **"Tesorero"**, el área, las competencias seleccionadas y las tareas genéricas del puesto.
+
+<Tip>
+  **Buena práctica en dos pasos:** (1) Escriba siempre la organización, la consultora y los clientes —con siglas y variantes— en **Términos a enmascarar**. (2) Haga una lectura rápida del prompt final antes de copiarlo; lleva menos de un minuto y es la última oportunidad para detectar cualquier dato que no debería salir.
+</Tip>

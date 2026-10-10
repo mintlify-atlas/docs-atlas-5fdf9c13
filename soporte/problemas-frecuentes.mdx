@@ -1,0 +1,205 @@
+---
+title: "Problemas frecuentes y soluciones del Gestor de Pruebas"
+sidebarTitle: "Problemas Frecuentes"
+description: "Soluciones rápidas para los problemas más comunes: errores de conexión, lista vacía de cargos, impresión sin colores y cambios perdidos."
+---
+
+Antes de revisar cada caso en detalle, recuerde que la gran mayoría de los problemas técnicos del Gestor de Pruebas dejan un mensaje descriptivo en la consola del navegador. Abrir esa consola es siempre el primer paso para diagnosticar cualquier error que no tenga una causa obvia a simple vista.
+
+<Tip>
+  Presione **F12** (o `Ctrl + Shift + I` en Windows / `Cmd + Option + I` en Mac) para abrir las herramientas de desarrollador del navegador y diríjase a la pestaña **Consola**. Los errores de carga de datos, problemas de red y fallos de JavaScript aparecen allí con información precisa sobre la causa.
+</Tip>
+
+---
+
+## Errores al iniciar la aplicación
+
+<AccordionGroup>
+  <Accordion title='Aparece "Error de conexión…" al entrar / Estado: "Error al leer los datos"'>
+    Este mensaje indica que el navegador no pudo obtener los datos de los archivos JSON que necesita la aplicación.
+
+    **Causas posibles:**
+
+    - La página fue abierta directamente desde el explorador de archivos (`file://`), en lugar de a través de un servidor HTTP.
+    - Alguno de los archivos de datos (`areas.json`, `cargos.json`, `dinamicas.json`) no está disponible en el repositorio `bd`.
+    - La función de Netlify `/.netlify/functions/pruebas` no está desplegada o no responde.
+    - Uno de los archivos JSON tiene un error de sintaxis que impide parsearlo.
+
+    **Soluciones:**
+
+    <Steps>
+      <Step title="Verifique cómo está accediendo a la aplicación">
+        La URL debe comenzar con `https://` (en producción) o `http://localhost:` (en desarrollo local). Si la URL comienza con `file://`, está abriendo el archivo directamente; la aplicación **no puede funcionar** de esa manera porque los navegadores bloquean las peticiones de red desde el protocolo `file://`.
+
+        Para desarrollo local, ejecute Netlify CLI desde la raíz del proyecto:
+
+        ```bash
+        npx netlify dev
+        ```
+
+        Y abra la URL local que indique el CLI (generalmente `http://localhost:8888`).
+      </Step>
+      <Step title="Revise la consola del navegador (F12)">
+        La consola mostrará exactamente qué petición falló y cuál fue el código de error HTTP. Busque mensajes en rojo que mencionen `pruebas`, `fetch` o `JSON`.
+      </Step>
+      <Step title="Valide los archivos JSON">
+        Si la consola muestra un error de parsing, abra el archivo afectado (en el repositorio `FABIOR1981/bd`, carpeta `pruebas_llamados/`) y valídelo con una herramienta online como [jsonlint.com](https://jsonlint.com) o con el comando:
+
+        ```bash
+        node -e "JSON.parse(require('fs').readFileSync('areas.json','utf8')); console.log('OK')"
+        ```
+
+        Los errores más comunes son: una coma al final del último elemento de un objeto o arreglo, comillas simples en lugar de dobles, o una llave/corchete de cierre faltante.
+      </Step>
+    </Steps>
+  </Accordion>
+
+  <Accordion title="La lista de cargos aparece vacía">
+    El selector **Puesto / Cargo** no muestra ninguna opción al cargar la pantalla principal.
+
+    **Causa:** El archivo `cargos.json` contiene un error de sintaxis o está vacío, lo que impide que la aplicación construya la lista de opciones.
+
+    **Solución:** Abra la consola del navegador (F12) para confirmar el error. Luego valide el contenido de `cargos.json` prestando especial atención a:
+
+    - **Comas:** no debe haber una coma después del último elemento de un objeto (`}`) ni de un arreglo (`]`).
+    - **Comillas:** todas las claves y valores de texto deben ir entre comillas dobles (`"`), nunca simples.
+    - **Llaves:** cada `{` de apertura debe tener su `}` de cierre correspondiente.
+
+    El archivo debe tener la estructura de un objeto JSON indexado por el código del cargo:
+
+    ```json
+    {
+      "CAR-FIN-CON-01": {
+        "nombre": "Contador",
+        "area": "Finanzas",
+        "competencias": [
+          { "comp": "Pensamiento Analítico", "desc": "Analiza con lógica y detecta incoherencias." }
+        ]
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Errores al generar la evaluación
+
+<AccordionGroup>
+  <Accordion title='"No hay dinámicas para este cargo"'>
+    Al seleccionar un cargo, la sección **Dinámicas a aplicar** aparece vacía y muestra este mensaje.
+
+    **Causa:** Ninguna de las dinámicas en `dinamicas.json` tiene el campo `cargo_id` con un valor que coincida **exactamente** con la clave del cargo seleccionado.
+
+    **Soluciones:**
+
+    - **Opción A — Corregir el `cargo_id`:** Abra `dinamicas.json` y verifique que el campo `cargo_id` de las dinámicas del cargo corresponda exactamente al código del cargo tal como aparece en `cargos.json`. Mayúsculas, guiones y números deben coincidir al detalle (por ejemplo, `CAR-ADM-GEN-01`).
+    - **Opción B — Crear las dinámicas:** Si el cargo es nuevo y todavía no tiene pruebas asignadas, acceda al **Panel de Administración** (botón **⚙️ Administrar Datos**), seleccione el cargo y use **+ Nueva Dinámica** para crear las pruebas necesarias.
+
+    <Note>
+      La relación entre dinámicas y cargos se establece únicamente por el campo `cargo_id`. No existe ningún otro mecanismo de vinculación; si ese valor no coincide exactamente, la dinámica no aparece.
+    </Note>
+  </Accordion>
+
+  <Accordion title="El formulario generado desapareció de pantalla">
+    Después de presionar **Generar Formulario** y ver el resultado, el informe se borra y aparece el aviso *"Selección modificada. Presione 'Generar Formulario' para actualizar los datos."*
+
+    **Causa:** Este comportamiento es **intencional**. Si se cambia el cargo o se marca o desmarca una dinámica después de generar, la aplicación limpia el resultado automáticamente para evitar imprimir un formulario con datos mezclados (por ejemplo, hojas del postulante de un cargo distinto al del informe).
+
+    **Solución:** Confirme la selección de cargo y dinámicas que desea usar y vuelva a presionar **Generar Formulario**. El informe se regenerará completo con la nueva selección.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Errores al guardar y exportar
+
+<AccordionGroup>
+  <Accordion title="Los cambios del Panel de Administración se perdieron">
+    Al volver al Generador o al recargar la página, los cambios realizados en el Panel de Administración (nuevas áreas, cargos o dinámicas) ya no aparecen.
+
+    **Causa:** El Panel de Administración trabaja **exclusivamente en memoria**. Los cambios no se persisten de forma automática en ningún momento; si la página se recarga o se cierra antes de guardar, se pierden sin posibilidad de recuperación.
+
+    **Solución:**
+
+    <Steps>
+      <Step title="Guarde siempre antes de salir">
+        Antes de recargar la página, navegar a otra pantalla o cerrar el navegador, presione **Guardar en GitHub** e ingrese la contraseña. La aplicación escribirá los tres archivos JSON directamente en el repositorio `FABIOR1981/bd`.
+      </Step>
+      <Step title="Si ya se perdieron los cambios">
+        Deberá repetir los cambios desde cero en el Panel de Administración y guardarlos correctamente al finalizar.
+      </Step>
+    </Steps>
+
+    <Warning>
+      No existe ninguna función de deshacer ni historial de cambios en memoria. **Guardar en GitHub es la única manera de persistir las modificaciones.**
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Solo se descargó un archivo (de los tres JSON)">
+    Al presionar **Descargar JSON Actualizado** en el Panel de Administración, el navegador descargó solamente uno de los tres archivos esperados (`areas.json`, `cargos.json` y `dinamicas.json`) en lugar de los tres.
+
+    **Causa:** Los navegadores modernos bloquean por defecto las descargas múltiples simultáneas originadas en un mismo sitio, ya que pueden considerarse comportamiento no deseado.
+
+    **Solución:**
+
+    1. Cuando el navegador muestre la notificación de bloqueo (generalmente en la barra de direcciones o en una alerta emergente), haga clic en ella y seleccione **Permitir descargas múltiples** para este sitio.
+    2. Vuelva a presionar **Descargar JSON Actualizado**. Esta vez se descargarán los tres archivos.
+
+    La configuración se mantiene para futuras sesiones en el mismo navegador y sitio, por lo que solo necesitará habilitarlo una vez.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Errores del Asistente de IA
+
+<AccordionGroup>
+  <Accordion title='"No se pudo cargar el lector de .docx"'>
+    Al intentar usar el asistente **Directrices desde bases (IA)**, aparece este error antes de que se pueda seleccionar el archivo.
+
+    **Causa:** El asistente necesita cargar la librería **Mammoth.js 1.6.0** desde el servicio externo `cdnjs.cloudflare.com` para poder leer archivos `.docx`. Si la conexión a Internet no está disponible o un proxy corporativo bloquea esa dirección, la carga falla.
+
+    **Soluciones:**
+
+    - **Verifique la conexión a Internet** y que el dominio `cdnjs.cloudflare.com` no esté bloqueado por un firewall o proxy en su red.
+    - **Opción avanzada — Hospedar Mammoth localmente:** Si el entorno de red no permite acceder a CDNs externos, descargue el archivo `mammoth.browser.min.js` de la versión 1.6.0, colóquelo en el servidor y cambie la constante `MAMMOTH_URL` al inicio del archivo `bases_ia.js` para que apunte a la ruta local:
+
+    ```javascript
+    // bases_ia.js — línea inicial
+    const MAMMOTH_URL = '/js/mammoth.browser.min.js'; // ruta local
+    ```
+
+    <Note>
+      El archivo `.docx` **nunca sale de su computadora**: Mammoth lo procesa íntegramente en el navegador y solo el texto extraído (ya revisado y anonimizado por usted) es lo que se copia para llevar a la IA externa.
+    </Note>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Errores de impresión
+
+<AccordionGroup>
+  <Accordion title="La impresión sale sin colores ni fondos de color">
+    Al imprimir el formulario o guardar en PDF, los recuadros de colores que aparecen en pantalla salen en blanco o gris.
+
+    **Causa:** Los navegadores desactivan por defecto la impresión de gráficos e imágenes de fondo para ahorrar tinta. La opción correspondiente se llama **Gráficos de fondo** (o *Background graphics* en navegadores en inglés) y viene desactivada de fábrica en el diálogo de impresión.
+
+    **Solución:** En el diálogo de impresión que abre el botón **Imprimir Formulario**:
+
+    1. Busque la sección **Más opciones** o **Opciones avanzadas** (puede ser necesario expandirla).
+    2. Active la casilla **Gráficos de fondo** (o *Print backgrounds*).
+    3. Proceda con la impresión o el guardado en PDF.
+
+    Esta configuración debe activarse cada vez que se abre el diálogo de impresión en una sesión nueva.
+  </Accordion>
+
+  <Accordion title="Solo se imprime una hoja en blanco">
+    Al usar la función de impresión del navegador directamente desde la página (no desde el botón **Imprimir Formulario**), el resultado es una hoja en blanco o el contenido no se ve correctamente.
+
+    **Causa:** La aplicación usa el evento `beforeprint` del navegador para copiar el contenido del informe desde el modal hacia una zona imprimible fuera de él antes de enviar al sistema de impresión. Si se imprime directamente desde el modal (por ejemplo, usando `Ctrl + P` mientras el modal está abierto sin haber generado antes), ese mecanismo puede no activarse correctamente.
+
+    **Solución:** Utilice siempre el botón **Imprimir Formulario** que aparece en la pantalla principal después de generar la evaluación. Ese botón activa el flujo correcto que garantiza que el contenido se prepare adecuadamente para impresión antes de abrir el diálogo del sistema operativo.
+  </Accordion>
+</AccordionGroup>

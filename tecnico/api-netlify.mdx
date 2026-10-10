@@ -1,0 +1,281 @@
+---
+title: "API del servidor: Netlify Function para catálogo y autenticación"
+sidebarTitle: "API del Servidor"
+description: "Referencia de los endpoints de la Netlify Function pruebas.js: leer catálogo, guardar cambios y autenticación por contraseña."
+---
+
+Toda la comunicación entre el navegador y los datos almacenados en GitHub pasa por una única Netlify Function: `pruebas.js`. Esta función actúa como intermediaria segura — expone dos endpoints HTTP (GET y POST) bajo la ruta `/.netlify/functions/pruebas`, protege el acceso con una contraseña configurada como variable de entorno, y lee o escribe los archivos del catálogo (`areas.json`, `cargos.json`, `dinamicas.json`) directamente sobre el repositorio `FABIOR1981/bd` a través de la API de contenidos de GitHub. El código del cliente que invoca estos endpoints vive en `datos/datos.js` como el objeto singleton `Datos`, que gestiona de forma automática la solicitud y reintento de contraseña ante respuestas `401`.
+
+## URL base
+
+```
+/.netlify/functions/pruebas
+```
+
+Todos los endpoints descritos en esta página son rutas relativas a esa base. En producción la URL completa queda determinada por el dominio del sitio publicado en Netlify.
+
+---
+
+## Autenticación
+
+Cada petición — tanto de lectura como de escritura — debe incluir la contraseña correcta. La función la compara con la variable de entorno `CLAVE_PRUEBAS` usando `crypto.timingSafeEqual`, que evita ataques de temporización.
+
+<Warning>
+Si la variable de entorno `CLAVE_PRUEBAS` **no está configurada** en el panel de Netlify, **todos** los endpoints devuelven `500` inmediatamente, independientemente de la contraseña enviada.
+</Warning>
+
+### Cómo enviar la contraseña
+
+<CardGroup cols={2}>
+  <Card title="Peticiones GET" icon="lock-open">
+    Incluir la contraseña en el encabezado HTTP `X-Clave`:
+
+    ```http
+    GET /.netlify/functions/pruebas
+    X-Clave: mi-contraseña-secreta
+    ```
+  </Card>
+  <Card title="Peticiones POST" icon="lock">
+    Incluir la contraseña en el campo `clave` del cuerpo JSON:
+
+    ```json
+    {
+      "clave": "mi-contraseña-secreta",
+      "base": { ... }
+    }
+    ```
+  </Card>
+</CardGroup>
+
+### Códigos de respuesta de autenticación
+
+| Código | Situación |
+|--------|-----------|
+| `401`  | Contraseña ausente o incorrecta |
+| `500`  | `CLAVE_PRUEBAS` no está configurada en el servidor |
+
+---
+
+## GET — Cargar catálogo completo
+
+Devuelve los tres archivos del catálogo (`areas`, `cargos`, `dinamicas`) en un único objeto JSON. La función los lee en paralelo desde el repositorio `FABIOR1981/bd`, rama `main`, carpeta `pruebas_llamados/`.
+
+### Solicitud
+
+```http
+GET /.netlify/functions/pruebas
+X-Clave: <contraseña>
+```
+
+### Respuesta exitosa `200`
+
+```json
+{
+  "areas": {
+    "FIN": { "nombre": "Finanzas" },
+    "ADM": { "nombre": "Administración" }
+  },
+  "cargos": {
+    "CAR-FIN-CON-01": {
+      "nombre": "Contador",
+      "area": "Finanzas",
+      "competencias": [
+        { "comp": "Pensamiento Analítico", "desc": "Analiza con lógica y detecta incoherencias." }
+      ]
+    }
+  },
+  "dinamicas": [
+    {
+      "id": "DIN-FIN-CON-01",
+      "cargo_id": "CAR-FIN-CON-01",
+      "titulo": "Análisis de estados contables",
+      "desc": "...",
+      "tiempo_limite": "10 Minutos",
+      "hoja_postulante": "...",
+      "caso_o_consigna": "...",
+      "guia_evaluacion": "...",
+      "respuesta_esperada": "..."
+    }
+  ]
+}
+```
+
+### Campos de la respuesta
+
+<ResponseField name="areas" type="object" required>
+  Objeto indexado por sigla de área (p. ej. `"FIN"`). Cada valor tiene la propiedad `nombre`.
+</ResponseField>
+
+<ResponseField name="cargos" type="object" required>
+  Objeto indexado por código de cargo (p. ej. `"CAR-FIN-CON-01"`). Cada valor incluye `nombre`, `area` (nombre del área) y `competencias` (array).
+</ResponseField>
+
+<ResponseField name="dinamicas" type="array" required>
+  Arreglo de todas las dinámicas del catálogo. Cada elemento se vincula a un cargo mediante el campo `cargo_id`.
+</ResponseField>
+
+### Códigos de respuesta
+
+| Código | Descripción |
+|--------|-------------|
+| `200`  | Catálogo devuelto correctamente |
+| `401`  | Contraseña inválida o ausente |
+| `404`  | Uno o más archivos JSON faltan en el repositorio `bd` |
+| `500`  | Error de configuración del servidor o fallo en la API de GitHub |
+
+---
+
+## POST — Guardar catálogo
+
+Escribe uno o más archivos del catálogo en el repositorio GitHub. Antes de cada escritura, la función **compara el contenido actual con el nuevo** y omite los archivos que no hayan cambiado, minimizando las operaciones sobre la API de GitHub.
+
+### Solicitud
+
+```http
+POST /.netlify/functions/pruebas
+Content-Type: application/json
+```
+
+```json
+{
+  "clave": "<contraseña>",
+  "base": {
+    "areas": {
+      "FIN": { "nombre": "Finanzas" }
+    },
+    "cargos": {
+      "CAR-FIN-CON-01": {
+        "nombre": "Contador",
+        "area": "Finanzas",
+        "competencias": []
+      }
+    },
+    "dinamicas": [
+      {
+        "id": "DIN-FIN-CON-01",
+        "cargo_id": "CAR-FIN-CON-01",
+        "titulo": "..."
+      }
+    ]
+  }
+}
+```
+
+### Parámetros del cuerpo
+
+<ParamField body="clave" type="string" required>
+  Contraseña de acceso. Debe coincidir con `CLAVE_PRUEBAS`.
+</ParamField>
+
+<ParamField body="base" type="object" required>
+  Objeto con las tres colecciones del catálogo. Debe contener exactamente:
+  - `areas` — objeto (no array, no null)
+  - `cargos` — objeto (no array, no null)
+  - `dinamicas` — array
+
+  Si cualquiera de estos campos falta o tiene el tipo incorrecto, la función devuelve `400`.
+</ParamField>
+
+### Respuesta exitosa `200`
+
+```json
+{
+  "ok": true,
+  "escritos": ["areas", "dinamicas"]
+}
+```
+
+<ResponseField name="ok" type="boolean">
+  Siempre `true` en respuestas exitosas.
+</ResponseField>
+
+<ResponseField name="escritos" type="array">
+  Lista de los archivos que **efectivamente se escribieron** en GitHub. Los archivos cuyo contenido no cambió no aparecen en este array. Puede ser un array vacío si ningún archivo fue modificado.
+</ResponseField>
+
+### Códigos de respuesta
+
+| Código | Descripción |
+|--------|-------------|
+| `200`  | Guardado completado (puede incluir cero escrituras si nada cambió) |
+| `400`  | Estructura de `base` inválida |
+| `401`  | Contraseña incorrecta |
+| `500`  | `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` no configurado, o error en la API de GitHub |
+
+<Note>
+Para poder guardar, el servidor necesita **dos** variables de entorno: `CLAVE_PRUEBAS` (contraseña de la app) y `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` (Personal Access Token con permiso de escritura sobre `FABIOR1981/bd`). La ausencia de cualquiera de las dos produce un `500`.
+</Note>
+
+---
+
+## Formato de todos los errores
+
+Todos los errores, sin excepción, devuelven un objeto JSON con la clave `error`:
+
+```json
+{ "error": "Descripción del problema." }
+```
+
+El código HTTP del error indica la categoría (`400` datos inválidos, `401` autenticación, `404` recurso no encontrado, `500` servidor).
+
+---
+
+## Integración con GitHub
+
+La función se comunica directamente con la [API de contenidos de GitHub](https://docs.github.com/en/rest/repos/contents) para leer y escribir archivos. Los detalles de esa integración son transparentes para el cliente, pero son relevantes para el mantenimiento del servidor.
+
+<CardGroup cols={2}>
+  <Card title="Lectura" icon="book-open">
+    `GET /repos/FABIOR1981/bd/contents/pruebas_llamados/<nombre>.json?ref=main`
+
+    El contenido del archivo viene codificado en Base64; la función lo decodifica antes de parsear el JSON.
+  </Card>
+  <Card title="Escritura" icon="pen-to-square">
+    `PUT /repos/FABIOR1981/bd/contents/pruebas_llamados/<nombre>.json`
+
+    Para actualizar un archivo existente, GitHub exige incluir el `sha` actual del archivo. La función lo obtiene en la lectura previa y lo adjunta al cuerpo del PUT.
+  </Card>
+</CardGroup>
+
+| Variable de entorno | Propósito |
+|---------------------|-----------|
+| `CLAVE_PRUEBAS` | Contraseña que deben enviar los clientes |
+| `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` | Personal Access Token con acceso de escritura a `FABIOR1981/bd` |
+
+<Warning>
+Si dos usuarios guardan el catálogo exactamente al mismo tiempo, el segundo PUT puede fallar con `409` porque el `sha` quedó desactualizado tras el primer guardado. En ese caso la función devuelve `500` con el mensaje de GitHub. La solución es recargar y volver a aplicar los cambios.
+</Warning>
+
+---
+
+## Uso desde el cliente (`datos/datos.js`)
+
+El objeto `Datos` encapsula toda la comunicación con la API y maneja de forma automática la autenticación. La contraseña se almacena en `sessionStorage` para evitar pedirla en cada acción.
+
+### `Datos.cargar()`
+
+Llama a `GET /.netlify/functions/pruebas` con el encabezado `X-Clave`. Devuelve una promesa que resuelve con `{ areas, cargos, dinamicas }`.
+
+```js
+const base = await Datos.cargar();
+// base.areas   → objeto de áreas
+// base.cargos  → objeto de cargos
+// base.dinamicas → array de dinámicas
+```
+
+### `Datos.guardar(base, clave)`
+
+Llama a `POST /.netlify/functions/pruebas` con el cuerpo `{ clave, base }`. Devuelve la respuesta `{ ok, escritos }`.
+
+```js
+const resultado = await Datos.guardar(base, claveIngresada);
+// resultado.escritos → ['areas', 'dinamicas'] (solo los archivos que cambiaron)
+```
+
+### Manejo automático de contraseña incorrecta
+
+Si cualquiera de los métodos recibe un `401`, `Datos` borra la contraseña guardada, muestra automáticamente un diálogo modal pidiendo la contraseña al usuario y **reintenta la petición** con la nueva contraseña ingresada. Si el usuario cancela el diálogo, la promesa se rechaza con un error `{ status: 401 }`.
+
+<Tip>
+No es necesario implementar lógica de manejo de contraseña en el código que consume `Datos`. El objeto se encarga de todo el ciclo: pedir, reintentar y almacenar en `sessionStorage`.
+</Tip>

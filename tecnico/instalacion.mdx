@@ -1,0 +1,157 @@
+---
+title: "Instalación y ejecución del Gestor de Pruebas para Llamados"
+sidebarTitle: "Instalación"
+description: "Cómo ejecutar el Gestor de Pruebas localmente con Netlify CLI o un servidor HTTP, y cómo publicarlo en Netlify u otro hosting estático."
+---
+
+El Gestor de Pruebas para Llamados es una aplicación web compuesta íntegramente por HTML, CSS y JavaScript, sin ningún paso de compilación. Sin embargo, su arquitectura requiere dos condiciones para funcionar correctamente: los archivos deben servirse a través de HTTP (no abrirse directamente desde el sistema de archivos) y, para la lectura y escritura de datos, debe estar disponible la función serverless de Netlify `netlify/functions/pruebas.js`. Esta página explica todas las opciones de ejecución local y producción, sus limitaciones y el proceso de configuración inicial del repositorio de datos.
+
+## Requisito fundamental: servidor HTTP
+
+La capa de datos (`datos/datos.js`) obtiene los tres catálogos JSON (`areas.json`, `cargos.json`, `dinamicas.json`) mediante `fetch()`. Los navegadores modernos **bloquean `fetch` sobre el protocolo `file://`**, por lo que abrir `index.html` con doble clic desde el explorador de archivos no es una opción válida.
+
+<Warning>
+Si se intenta abrir la aplicación directamente desde el sistema de archivos, aparecerá la alerta:
+
+**"Error de conexión. Asegúrate de correr la app en Netlify o un servidor local."**
+
+El indicador de **Estado** también mostrará error y el selector de cargos quedará vacío. La solución siempre es servir los archivos a través de HTTP, ya sea con Netlify CLI, con un servidor local o con cualquier hosting estático.
+</Warning>
+
+## Opción A — Netlify CLI (recomendada para desarrollo)
+
+Este es el método recomendado para desarrollo local porque levanta tanto los archivos estáticos como la función serverless `netlify/functions/pruebas.js`, replicando exactamente el comportamiento de producción.
+
+<Steps>
+  <Step title="Instalar dependencias previas">
+    Asegúrate de tener **Node.js** instalado (cualquier versión LTS reciente). No se necesita instalar nada más de forma global: el comando `npx` descargará Netlify CLI automáticamente si no está presente.
+  </Step>
+  <Step title="Configurar las variables de entorno locales">
+    Crea un archivo `.env` en la raíz del proyecto con las dos variables requeridas. Consulta la página [Variables de Entorno](/tecnico/variables-entorno) para los detalles de cada una.
+
+    ```bash .env
+    CLAVE_PRUEBAS=tu_contraseña_segura
+    GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD=ghp_...
+    ```
+
+    <Warning>
+    Nunca hagas commit de este archivo. Asegúrate de que `.env` esté incluido en `.gitignore`.
+    </Warning>
+  </Step>
+  <Step title="Ejecutar Netlify CLI">
+    Desde la raíz del proyecto:
+
+    ```bash
+    npx netlify dev
+    ```
+
+    Netlify CLI mostrará en la terminal la URL local donde sirve la aplicación (habitualmente `http://localhost:8888`). Ábrela en el navegador para acceder al generador, o agrega `/admin.html` para el panel de administración.
+  </Step>
+</Steps>
+
+<Tip>
+Con Netlify CLI, la función `pruebas.js` queda disponible en `/.netlify/functions/pruebas`. El archivo `netlify.toml` del proyecto ya configura los redireccionamientos necesarios, por lo que no se requiere ninguna configuración adicional.
+</Tip>
+
+## Opción B — Servidor HTTP estático (solo interfaz)
+
+Si únicamente necesitas revisar el diseño o la maquetación sin conectarte al repositorio de datos, puedes usar cualquier servidor HTTP simple. En este modo, **la función serverless no está disponible**, por lo que la aplicación no podrá leer ni guardar datos.
+
+```bash
+# Con Python (incluido en macOS y la mayoría de distribuciones Linux):
+python -m http.server 8080
+
+# O con Node.js vía npx:
+npx serve .
+```
+
+Luego abre en el navegador:
+
+- `http://localhost:8080` — Generador de evaluaciones
+- `http://localhost:8080/admin.html` — Panel de administración
+
+<Warning>
+Sin la función de Netlify, la app **no puede cargar ni guardar datos**. El indicador de **Estado** mostrará error en cuanto se intente acceder a los catálogos. Utiliza esta opción únicamente para pruebas visuales o de maquetación de la interfaz.
+</Warning>
+
+## Despliegue en producción con Netlify
+
+Netlify es la plataforma de referencia para este proyecto. No se requiere ningún comando de build: el repositorio se despliega tal cual, desde la raíz.
+
+<Steps>
+  <Step title="Conectar el repositorio a Netlify">
+    En el panel de Netlify, elige **Add new site → Import an existing project** y conecta tu cuenta de GitHub. Selecciona el repositorio del Gestor de Pruebas.
+  </Step>
+  <Step title="Configurar el despliegue">
+    En la sección **Build settings**, usa esta configuración:
+
+    | Campo | Valor |
+    |---|---|
+    | Base directory | *(vacío)* |
+    | Build command | *(vacío — no hay build)* |
+    | Publish directory | `/` |
+
+    La función en `netlify/functions/pruebas.js` se detecta y despliega automáticamente.
+  </Step>
+  <Step title="Configurar las variables de entorno">
+    Ve a **Site settings → Environment variables** y agrega las dos variables requeridas. Consulta la página [Variables de Entorno](/tecnico/variables-entorno) para el detalle de cada una.
+
+    | Variable | Requerida |
+    |---|---|
+    | `CLAVE_PRUEBAS` | Sí — sin ella, ninguna operación funcionará |
+    | `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` | Para leer repos privados y para guardar |
+  </Step>
+  <Step title="Hacer el primer deploy">
+    Haz clic en **Deploy site**. Netlify construirá (en este caso, solo copiará) los archivos y activará la función. En pocos segundos el sitio estará disponible en la URL asignada.
+  </Step>
+</Steps>
+
+<Note>
+Cada nuevo `git push` a la rama `main` desencadena un redeploy automático en Netlify, que actualiza tanto los archivos estáticos como la función serverless.
+</Note>
+
+## Otros hostings estáticos (Apache, Nginx, GitHub Pages, IIS)
+
+Los archivos HTML, CSS y JavaScript de la aplicación pueden servirse desde **cualquier servidor HTTP**, pero la función serverless `netlify/functions/pruebas.js` es específica de la plataforma Netlify.
+
+<CardGroup cols={2}>
+  <Card title="Apache / Nginx / IIS" icon="server">
+    Los archivos estáticos funcionan sin problemas. Sin embargo, deberás reimplementar el endpoint de la API (`/.netlify/functions/pruebas`) en la plataforma que elijas, respetando exactamente el contrato de la función: mismos métodos HTTP, mismos encabezados de autenticación y misma lógica de acceso a la API de GitHub.
+  </Card>
+  <Card title="GitHub Pages" icon="github">
+    Solo sirve archivos estáticos y **no admite funciones serverless**. Publicar únicamente en GitHub Pages no es suficiente para que la aplicación funcione en su totalidad.
+  </Card>
+</CardGroup>
+
+<Warning>
+**GitHub Pages solo no es suficiente.** La carga y el guardado de datos dependen de la función serverless. Si publicas solo los archivos estáticos en GitHub Pages, la app mostrará el error de conexión y no podrá cargar los catálogos.
+</Warning>
+
+## Configuración inicial del repositorio de datos
+
+El Gestor de Pruebas lee y escribe sus catálogos en el repositorio `FABIOR1981/bd`, bajo la carpeta `pruebas_llamados/`. Si estás haciendo un despliegue propio desde cero, sigue estos pasos:
+
+<Steps>
+  <Step title="Crear o bifurcar el repositorio bd">
+    Crea un nuevo repositorio llamado `bd` en tu cuenta de GitHub, o bifurca (`fork`) el repositorio `FABIOR1981/bd` si quieres partir del catálogo existente. La rama de trabajo debe llamarse `main`.
+  </Step>
+  <Step title="Actualizar la referencia al repositorio en la función">
+    Si usas un repositorio propio (distinto de `FABIOR1981/bd`), edita las constantes en `netlify/functions/pruebas.js`:
+
+    ```javascript netlify/functions/pruebas.js
+    const REPO = 'TU_USUARIO/bd';   // ← cambia al owner/repo correcto
+    const RUTA = 'pruebas_llamados';
+    const RAMA = 'main';
+    ```
+  </Step>
+  <Step title="Generar un token de GitHub con los permisos necesarios">
+    En tu cuenta de GitHub, ve a **Settings → Developer settings → Personal access tokens** y crea un token (clásico o fine-grained) con permiso `contents: write` sobre el repositorio `bd`. Este valor es el que se asigna a `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` en Netlify.
+  </Step>
+  <Step title="Primer guardado desde el panel de administración">
+    Una vez configurado el token, accede al panel de administración (`/admin.html`), realiza cualquier cambio en el catálogo y haz clic en **Guardar en GitHub**. Si los archivos `areas.json`, `cargos.json` y `dinamicas.json` no existen todavía en `bd/pruebas_llamados/`, la función los **crea automáticamente** en ese primer guardado.
+  </Step>
+</Steps>
+
+<Note>
+Los cambios realizados en el panel de administración se mantienen únicamente en memoria mientras la pestaña está abierta. Si se recarga la página antes de guardar, los cambios se pierden. Guarda siempre antes de cerrar o recargar el panel.
+</Note>

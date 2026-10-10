@@ -1,0 +1,184 @@
+---
+title: "Incorporar la respuesta de la IA al catálogo de dinámicas"
+sidebarTitle: "Incorporar Respuesta"
+description: "Pasos para copiar los bloques JSON devueltos por la IA e integrarlos correctamente en areas.json, cargos.json y dinamicas.json."
+---
+
+Una vez que la inteligencia artificial devuelve su respuesta, el trabajo del asistente termina y comienza la tarea del responsable técnico: incorporar los nuevos objetos JSON a los archivos de datos de la herramienta. Este proceso requiere precisión —los archivos deben mantener su estructura válida—, pero es directo si se siguen los pasos en orden. Una vez publicados los cambios, las nuevas dinámicas quedarán disponibles para todos los usuarios de la herramienta.
+
+## Qué devuelve la IA
+
+La respuesta de la IA incluye bloques JSON listos para pegar, organizados por archivo:
+
+<CardGroup cols={3}>
+  <Card title="4 nuevas dinámicas" icon="list-check">
+    Siempre presentes. Cada dinámica es un objeto JSON para incorporar a `dinamicas.json`.
+  </Card>
+  <Card title="Objeto de cargo (si es nuevo)" icon="user-tie">
+    Solo aparece si el cargo no existía en el catálogo. Se incorpora a `cargos.json`.
+  </Card>
+  <Card title="Objeto de área (si es nueva)" icon="building">
+    Solo aparece si el área tampoco existía. Se incorpora a `areas.json`.
+  </Card>
+</CardGroup>
+
+<Warning>
+  **El contenido de la IA es un borrador.** Antes de usar las dinámicas en una evaluación real, revise siempre las consignas para el postulante, las respuestas esperadas, la guía de observación y la coherencia entre las competencias de la dinámica y las del cargo. La responsabilidad editorial es del profesional.
+</Warning>
+
+## Estructura de los archivos de datos
+
+Antes de pegar los bloques JSON, tenga en cuenta el formato de cada archivo:
+
+```json
+// areas.json — objeto cuya clave es la sigla del área (3 letras en mayúsculas)
+{
+    "FIN": { "nombre": "Finanzas" },
+    "ADM": { "nombre": "Administración" }
+}
+```
+
+```json
+// cargos.json — objeto cuya clave es el código del cargo
+{
+    "CAR-FIN-CON-01": {
+        "nombre": "Contador",
+        "area": "Finanzas",
+        "competencias": [
+            { "comp": "Pensamiento Analítico", "desc": "Analiza con lógica y detecta incoherencias." }
+        ]
+    }
+}
+```
+
+```json
+// dinamicas.json — arreglo (array) de objetos
+[
+    {
+        "id": "DIN-FIN-CON-01",
+        "cargo_id": "CAR-FIN-CON-01",
+        "titulo": "...",
+        "desc": "...",
+        "tiempo_limite": "8 Minutos",
+        "hoja_postulante": "Consigna para el postulante...",
+        "caso_o_consigna": "Objetivo para el evaluador...",
+        "guia_evaluacion": "• Éxito: ...\n• Alerta: ...",
+        "respuesta_esperada": "..."
+    }
+]
+```
+
+<Note>
+  `areas.json` y `cargos.json` son **objetos** (delimitados por `{}`). `dinamicas.json` es un **arreglo** (delimitado por `[]`). Confundir ambas estructuras es el error más común al incorporar la respuesta de la IA.
+</Note>
+
+## Paso a paso para incorporar la respuesta
+
+<Steps>
+  <Step title="Recibir y leer la respuesta de la IA">
+    Copie la respuesta completa de la IA. Identifique los bloques JSON que corresponden a cada archivo. La IA señala en cada bloque a qué archivo pertenece. Si el cargo y el área ya existían en el catálogo, la respuesta solo contendrá los bloques para `dinamicas.json`.
+
+    Antes de pegar nada, **revise el contenido**: consignas, respuestas esperadas, guía de observación y coherencia con el perfil del cargo.
+  </Step>
+
+  <Step title="Incorporar el área nueva (si aplica)">
+    Si la respuesta incluye un bloque para `areas.json`, abra el archivo `datos/areas.json` en un editor de texto o de código.
+
+    Ubique la llave de cierre final (`}`) del objeto. Pegue la nueva entrada **antes** de esa llave, separada por una coma del elemento anterior:
+
+    ```json
+    {
+        "FIN": { "nombre": "Finanzas" },
+        "TEC": { "nombre": "Tecnología y Sistemas" }
+    }
+    ```
+
+    Asegúrese de que **no haya coma después del último elemento** (el que está justo antes de la `}`).
+  </Step>
+
+  <Step title="Incorporar el cargo nuevo (si aplica)">
+    Si la respuesta incluye un bloque para `cargos.json`, abra `datos/cargos.json`.
+
+    Pegue la nueva entrada dentro del objeto `{}`, separada por coma del elemento anterior:
+
+    ```json
+    {
+        "CAR-FIN-CON-01": { ... },
+        "CAR-TEC-DES-01": {
+            "nombre": "Desarrollador",
+            "area": "Tecnología y Sistemas",
+            "competencias": [ ... ]
+        }
+    }
+    ```
+
+    <Warning>
+      Los cargos creados desde la respuesta de la IA reciben competencias propuestas. **Revise y ajuste esas competencias** antes de publicar: son las columnas que aparecerán en la tabla de puntaje de los postulantes.
+    </Warning>
+  </Step>
+
+  <Step title="Incorporar las dinámicas nuevas">
+    Abra `datos/dinamicas.json`. Este archivo es un **arreglo**: contiene una lista de objetos entre corchetes `[]`.
+
+    Ubique el corchete de cierre final (`]`). Pegue cada nueva dinámica **antes** de ese corchete, separada por coma del último elemento existente:
+
+    ```json
+    [
+        { "id": "DIN-FIN-CON-01", ... },
+        { "id": "DIN-FIN-CON-02", ... },
+        { "id": "DIN-TEC-DES-01", "cargo_id": "CAR-TEC-DES-01", ... },
+        { "id": "DIN-TEC-DES-02", "cargo_id": "CAR-TEC-DES-01", ... }
+    ]
+    ```
+
+    Verifique que el campo `cargo_id` de cada nueva dinámica coincida **exactamente** con la clave del cargo en `cargos.json` (incluyendo mayúsculas, guiones y número final).
+  </Step>
+
+  <Step title="Validar los archivos JSON">
+    Antes de publicar, valide los tres archivos modificados para detectar errores de sintaxis:
+
+    - **Opción A:** use un validador en línea (p. ej. [jsonlint.com](https://jsonlint.com)) pegando el contenido de cada archivo.
+    - **Opción B:** abra la aplicación en un servidor local (`python -m http.server 8080` o `npx serve .`) y verifique que el Estado del generador muestre **Datos cargados** en verde y que el cargo nuevo aparezca en el selector.
+
+    Los errores de sintaxis más comunes son: coma faltante entre elementos, coma sobrante después del último elemento, comillas faltantes o llave/corchete sin cerrar.
+  </Step>
+
+  <Step title="Probar localmente y publicar">
+    Con la aplicación funcionando en local, genere una evaluación de prueba seleccionando el nuevo cargo y verifique que:
+
+    - Las dinámicas nuevas aparecen en la lista de selección.
+    - El formulario generado muestra correctamente título, descripción, guía de observación y corrector.
+    - Las hojas del postulante tienen la consigna y los renglones correctos.
+
+    Una vez confirmado, reemplace los tres archivos en `datos/` del repositorio, haga *commit* y publique. Si usa Netlify, el despliegue se activa automáticamente al hacer *commit*.
+
+    Para el flujo detallado de publicación, consulte la página [Guardar y publicar cambios](/admin/guardar-cambios).
+  </Step>
+</Steps>
+
+## Errores frecuentes al incorporar la respuesta
+
+<AccordionGroup>
+  <Accordion title="Coma faltante o sobrante entre elementos">
+    JSON no admite comas al final del último elemento de un objeto o arreglo, pero sí requiere coma entre elementos. Al pegar un bloque nuevo, verifique que haya coma al final del elemento anterior y que el nuevo bloque no tenga coma adicional al final si es el último.
+  </Accordion>
+  <Accordion title="cargo_id no coincide con la clave del cargo">
+    El campo `cargo_id` en `dinamicas.json` debe ser idéntico —carácter por carácter— a la clave del cargo en `cargos.json`. Por ejemplo, `"CAR-TEC-DES-01"` en un archivo y `"CAR-TEC-DES-1"` en el otro provocará que las dinámicas no aparezcan en la herramienta.
+  </Accordion>
+  <Accordion title="Confundir objeto con arreglo">
+    `areas.json` y `cargos.json` son objetos (`{}`): las nuevas entradas se pegan dentro de las llaves. `dinamicas.json` es un arreglo (`[]`): las nuevas entradas se pegan dentro de los corchetes. Pegar un objeto de dinámica dentro de `cargos.json`, o viceversa, rompe la estructura.
+  </Accordion>
+  <Accordion title="Anidado incorrecto en cargos.json">
+    El array `competencias` es un campo dentro de cada objeto de cargo. Asegúrese de que queda correctamente anidado dentro de las llaves del cargo, y no al nivel raíz del archivo.
+  </Accordion>
+</AccordionGroup>
+
+## Limitaciones del asistente que afectan la incorporación
+
+<Note>
+  Tenga en cuenta estas limitaciones antes de publicar cualquier cambio generado por la IA:
+
+  - **Solo acepta `.docx`:** si el profesional usó un archivo distinto, el asistente no pudo procesar las bases y los bloques JSON pueden estar incompletos o basarse en datos incorrectos.
+  - **Requiere acceso a cdnjs:** si Mammoth.js no se cargó correctamente, el texto del documento no se procesó bien. Verificar que el asistente funcionó sin errores antes de incorporar la respuesta.
+  - **La detección de cargo puede capturar palabras de más:** el campo `cargo_id` generado podría no coincidir con una entrada real de `cargos.json`. Revise siempre que la clave del cargo sea correcta.
+</Note>

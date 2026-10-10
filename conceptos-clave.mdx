@@ -1,0 +1,160 @@
+---
+title: "Conceptos clave del Gestor de Pruebas para Llamados"
+sidebarTitle: "Conceptos Clave"
+description: "Glosario de los términos que usa la herramienta: área, cargo, competencia, dinámica, guía de observación, corrector y dictamen global."
+---
+
+Para usar el Gestor de Pruebas con fluidez es importante conocer el vocabulario propio de la herramienta. Muchos de estos términos aparecen en pantalla, en los formularios generados y en los archivos de datos. Este glosario define cada concepto, muestra ejemplos concretos y explica cómo se relacionan entre sí para producir una evaluación completa.
+
+## Glosario de términos
+
+<Tabs>
+  <Tab title="Estructura organizativa">
+    ### Área
+
+    Un **Área** representa un sector de la organización. Agrupa los cargos que pertenecen a una misma división funcional. Cada área tiene un nombre y una sigla de tres letras que la identifica de forma única; esa sigla forma parte de los códigos de los cargos y dinámicas que contiene.
+
+    **Ejemplos:** Operativa (`OPE`), Administración (`ADM`), Supervisión (`SUP`), Finanzas (`FIN`).
+
+    ---
+
+    ### Cargo
+
+    Un **Cargo** es el puesto al que se postula el candidato dentro de un área determinada. Cada cargo define las competencias que se evaluarán y tiene asociadas una o más dinámicas. El código de cargo se genera automáticamente combinando el prefijo `CAR-`, la sigla del área, una sigla de especialidad y un número correlativo.
+
+    **Ejemplos:** `CAR-ADM-GEN-01` (Administrativo), `CAR-FIN-TES-01` (Tesorero), `CAR-SUP-ENC-01` (Encargado).
+
+    <Tip>
+      Cuando se crea un cargo nuevo, la herramienta agrega dos competencias de ejemplo como punto de partida. El responsable técnico puede ajustar las competencias reales antes de comenzar a usar ese cargo en evaluaciones.
+    </Tip>
+  </Tab>
+
+  <Tab title="Dinámicas y pruebas">
+    ### Dinámica
+
+    Una **Dinámica** es una prueba o ejercicio práctico que se aplica al postulante durante la evaluación. Cada dinámica pertenece a un cargo específico y está diseñada para observar una o más competencias del perfil. Al igual que los cargos, cada dinámica recibe un código único generado automáticamente: `DIN-` + sigla de área + sigla de especialidad + número correlativo.
+
+    **Ejemplo:** `DIN-ADM-GEN-03` podría ser una prueba de atención sostenida para el cargo Administrativo.
+
+    Cada dinámica incluye los siguientes datos:
+
+    | Campo | Descripción |
+    |---|---|
+    | **Título** | Nombre corto de la prueba. |
+    | **Descripción breve** | En qué consiste, resumido en una línea. |
+    | **Tiempo límite** | Duración prevista (p. ej. *3 Minutos Exactos* o *Aprox. 5 a 8 minutos*). |
+    | **Consigna para el postulante** | El texto que leerá el candidato en su hoja de trabajo. |
+    | **Objetivo para el evaluador** | Qué mide la prueba y qué se espera observar. |
+    | **Guía de observación** | Indicadores de buen desempeño (Éxito) y de dificultades (Alerta). |
+    | **Corrector** | Respuestas correctas o esperadas (opcional). |
+
+    ---
+
+    ### Guía de observación
+
+    La **Guía de observación** es la sección de cada dinámica que orienta al evaluador durante la aplicación. Está redactada en dos partes:
+
+    - **• Éxito:** conductas o respuestas que indican buen desempeño.
+    - **• Alerta:** conductas o respuestas que indican dificultades o áreas de mejora.
+
+    La guía es una orientación profesional, no un dictamen automático. El evaluador la usa como referencia para fundamentar su puntuación y sus observaciones.
+
+    ---
+
+    ### Corrector
+
+    El **Corrector** contiene las respuestas correctas o esperadas de la prueba. Incluye, cuando corresponde, la explicación de las «trampas» previstas en el ejercicio (distractores, opciones incorrectas o situaciones ambiguas). Es visible para el evaluador en el informe, pero puede ocultarse antes de imprimir usando el interruptor **Guía y corrector**, útil cuando el material puede quedar a la vista de otras personas.
+
+    ---
+
+    ### Hoja del postulante
+
+    La **Hoja del postulante** es el material que se entrega físicamente al candidato. Contiene:
+
+    - Espacio para escribir nombre y fecha.
+    - El código de la dinámica.
+    - El tiempo límite.
+    - La consigna que debe leer y resolver.
+    - Renglones en blanco para escribir la respuesta (entre 0 y 30 líneas, configurables).
+
+    Al imprimir, cada hoja del postulante ocupa una página A4 independiente.
+  </Tab>
+
+  <Tab title="Evaluación y dictamen">
+    ### Competencia
+
+    Una **Competencia** es una capacidad, habilidad o comportamiento observable que se mide durante la evaluación. Cada cargo define su propio conjunto de competencias, que aparecen como columnas en la tabla de puntaje. La escala de puntuación va de **0 a 5** por competencia y por dinámica.
+
+    **Ejemplos:** Gestión del Tiempo, Visión Estratégica, Negociación e Influencia, Gestión de Crisis, Atención al Detalle.
+
+    El puntaje total se normaliza sobre **30 puntos** y tiene en cuenta el peso relativo de cada dinámica cuando está configurado.
+
+    ---
+
+    ### Dictamen global
+
+    El **Dictamen global** es la conclusión final del proceso de evaluación para cada postulante. Se completa a mano en el informe impreso y tiene tres posibles valores:
+
+    <CardGroup cols={3}>
+      <Card title="Apto" icon="circle-check">
+        El postulante reúne las competencias requeridas para el cargo.
+      </Card>
+      <Card title="Apto con reservas" icon="circle-exclamation">
+        El postulante cumple los requisitos mínimos pero presenta áreas de mejora que deben considerarse.
+      </Card>
+      <Card title="No apto" icon="circle-xmark">
+        El postulante no alcanza el nivel de competencias requerido para el cargo en esta instancia.
+      </Card>
+    </CardGroup>
+
+    El dictamen siempre lo emite el profesional a cargo de la evaluación. La herramienta provee la estructura y los puntajes; la decisión final es humana.
+
+    ---
+
+    ### Código de cargo / Código de dinámica
+
+    Cada cargo y cada dinámica tienen un **código alfanumérico único** generado automáticamente por la herramienta. Aparece en pantalla, en el informe del evaluador y en las hojas del postulante, permitiendo identificar sin ambigüedades qué prueba se aplicó en cada instancia.
+
+    | Tipo | Formato | Ejemplo |
+    |---|---|---|
+    | Cargo | `CAR-[ÁREA]-[ESP]-[NN]` | `CAR-ADM-GEN-01` |
+    | Dinámica | `DIN-[ÁREA]-[ESP]-[NN]` | `DIN-ADM-GEN-03` |
+
+    Donde `[ÁREA]` es la sigla del área (3 letras), `[ESP]` es la sigla de especialidad del cargo (hasta 3 letras) y `[NN]` es un número correlativo de dos dígitos.
+  </Tab>
+</Tabs>
+
+## Relación entre los conceptos
+
+Comprender cómo se encadenan estos conceptos ayuda a organizar el catálogo y a interpretar los resultados de la evaluación. La estructura jerárquica es la siguiente:
+
+```
+Área
+ └── Cargo  (tiene competencias definidas y un código único)
+      └── Dinámica  (ejercicio práctico con código propio)
+           ├── Hoja del postulante  (consigna + renglones)
+           ├── Guía de observación  (Éxito / Alerta)
+           └── Corrector  (respuestas esperadas)
+```
+
+<Steps>
+  <Step title="El Área agrupa Cargos">
+    Todos los cargos pertenecen a un área de la organización. El área determina la sigla que forma parte del código de los cargos y dinámicas que contiene.
+  </Step>
+  <Step title="El Cargo define las Competencias">
+    Cada cargo tiene un conjunto de competencias que representan las capacidades que se evaluarán en los postulantes. Esas competencias se convierten en las columnas de la tabla de puntaje.
+  </Step>
+  <Step title="Las Dinámicas operacionalizan la evaluación">
+    Cada dinámica es un ejercicio práctico asociado a un cargo. Al aplicarse, permite observar y puntuar una o más de las competencias del cargo. Una misma dinámica puede evaluar más de una competencia.
+  </Step>
+  <Step title="La puntuación produce un total comparable">
+    Por cada dinámica, el evaluador asigna un puntaje (0–5) a cada competencia. Los totales por dinámica, por competencia y el total general se calculan automáticamente en la tabla. El total se normaliza sobre 30 puntos.
+  </Step>
+  <Step title="El evaluador emite el Dictamen global">
+    Con los puntajes, las notas de conducta y su criterio profesional, el evaluador completa el dictamen final: *Apto*, *Apto con reservas* o *No apto*. La herramienta estructura la información; la decisión es siempre del profesional.
+  </Step>
+</Steps>
+
+<Note>
+  Las dinámicas son **ejercicios situacionales** pensados para observar competencias en relación con el cargo. No son tests psicométricos estandarizados y pueden complementar los instrumentos que el evaluador ya utiliza, los cuales tienen sus propias normas de aplicación e interpretación.
+</Note>

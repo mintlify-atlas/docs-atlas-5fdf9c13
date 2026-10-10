@@ -1,0 +1,125 @@
+---
+title: "Pantallas del Gestor de Pruebas para Llamados"
+sidebarTitle: "Pantallas"
+description: "Descripción de las dos pantallas principales: el Generador de Evaluaciones y el Panel de Administración, y cómo navegar entre ellas."
+---
+
+El Gestor de Pruebas para Llamados está compuesto por **dos pantallas** entre las que se puede pasar con un solo clic. Cada una tiene un propósito distinto: una es de uso diario para armar evaluaciones, y la otra es de uso administrativo para mantener el catálogo de áreas, cargos y dinámicas. Conocer cuándo usar cada pantalla evita confusiones y ayuda a sacarle el máximo provecho a la herramienta.
+
+## Las dos pantallas de un vistazo
+
+| Pantalla | Archivo | Para qué se usa |
+|---|---|---|
+| **Generador de Evaluaciones** | `index.html` | Uso diario: elegir el cargo, indicar la cantidad de postulantes, marcar las dinámicas y generar e imprimir el material completo. Es la pantalla que se abre al ingresar a la herramienta. |
+| **Panel de Administración** | `admin.html` | Uso administrativo: crear y editar áreas, cargos y dinámicas; usar el asistente de IA; descargar los archivos JSON para publicar los cambios. |
+
+## Cómo navegar entre las pantallas
+
+La navegación es directa y no requiere menús ni rutas especiales:
+
+- Desde el **Generador**, presiona el botón **⚙️ Administrar Datos** para pasar al Panel de Administración.
+- Desde el **Panel de Administración**, presiona el botón **⬅️ Volver al Generador** para regresar a la pantalla principal.
+
+No es necesario iniciar sesión para ninguna de las dos pantallas en el uso cotidiano. El Panel de Administración sí solicita una contraseña al momento de **guardar los cambios en GitHub**, pero no para consultar o editar los datos en memoria.
+
+## Generador de Evaluaciones (`index.html`)
+
+El Generador es la pantalla que utilizan los evaluadores y psicólogos en su trabajo diario. Al abrirla, la herramienta carga automáticamente el catálogo de áreas, cargos y dinámicas desde la API. Si la carga es exitosa, el formulario de selección queda habilitado de inmediato.
+
+**Flujo habitual de uso:**
+
+<Steps>
+  <Step title="Elegir el cargo">
+    En el selector **Puesto / Cargo**, elige el cargo del llamado. La lista muestra solo los cargos disponibles en el catálogo.
+  </Step>
+  <Step title="Indicar la cantidad de postulantes">
+    En el campo **Postulantes**, escribe cuántos candidatos vas a evaluar (de 1 a 10). Se generará una tabla de puntaje y un juego de hojas de trabajo para cada uno.
+  </Step>
+  <Step title="Seleccionar las dinámicas">
+    En **Dinámicas a aplicar**, marca las pruebas que usarás. Aparecen solo las del cargo elegido. Si seleccionas más de una, se muestra el **tiempo total estimado** de la sesión.
+  </Step>
+  <Step title="Generar el formulario">
+    Presiona **Generar Formulario**. El material completo aparece debajo: informe para el evaluador, tabla de puntaje y hojas de trabajo.
+  </Step>
+  <Step title="Imprimir o guardar en PDF">
+    Presiona **Imprimir Formulario**. La ventana de impresión del navegador se abre con el material listo para imprimir en A4 o guardar como PDF.
+  </Step>
+</Steps>
+
+<Tip>
+  El interruptor **Guía y corrector** (activado por defecto) muestra u oculta la guía de observación y las respuestas esperadas en el informe del evaluador. Desactívalo si necesitas imprimir el material **sin las respuestas**, por ejemplo cuando el informe puede quedar a la vista de otras personas antes de la evaluación.
+</Tip>
+
+## Panel de Administración (`admin.html`)
+
+El Panel de Administración es el núcleo de configuración de la herramienta. Desde aquí se gestiona todo el catálogo: áreas, cargos, competencias y dinámicas. También incluye el **asistente de IA** para crear dinámicas nuevas a partir de las bases de un llamado.
+
+### Indicador de estado
+
+En la parte superior del Panel aparece el indicador **Estado**:
+
+| Estado | Color | Significado |
+|---|---|---|
+| *Datos cargados* | 🟢 Verde | El catálogo se cargó correctamente y los datos están disponibles para editar. |
+| *Error al leer los datos* | 🔴 Rojo | Hubo un problema al conectar con la API. Verifica la dirección de acceso o avisa al responsable técnico. |
+
+### Operaciones disponibles
+
+<CardGroup cols={2}>
+  <Card title="Crear y editar áreas" icon="folder-plus">
+    Define sectores de la organización con nombre y sigla de 3 letras. La sigla forma parte del código de todos los cargos y dinámicas del área.
+  </Card>
+  <Card title="Crear y editar cargos" icon="briefcase">
+    Agrega puestos a un área con nombre y sigla de especialidad. El código del cargo se genera automáticamente.
+  </Card>
+  <Card title="Gestionar dinámicas" icon="list-check">
+    Crea, edita, duplica o borra pruebas de un cargo. Cada dinámica incluye consigna, guía de observación, corrector y configuración de renglones.
+  </Card>
+  <Card title="Asistente de IA" icon="robot">
+    Lee el archivo `.docx` de las bases del llamado, anonimiza los datos sensibles y genera un *prompt* para pedirle a una IA externa que proponga dinámicas nuevas.
+  </Card>
+</CardGroup>
+
+### Guardar los cambios
+
+Los cambios realizados en el Panel **no se guardan automáticamente**. Para publicarlos:
+
+<Steps>
+  <Step title="Descargar los archivos JSON">
+    Presiona **📥 Descargar JSON Actualizado**. El navegador descargará tres archivos: `areas.json`, `cargos.json` y `dinamicas.json`. Si el navegador pregunta si permite descargar varios archivos, acepta.
+  </Step>
+  <Step title="Enviar al responsable técnico">
+    Entrega los tres archivos al responsable técnico para que los publique en el repositorio `bd`. Recién entonces los cambios estarán disponibles para todos los usuarios.
+  </Step>
+</Steps>
+
+<Warning>
+  El Panel de Administración trabaja **en memoria**. Todo lo que agregues, edites o borres en esta sesión existe únicamente en el navegador. Si recargas la página o la cierras **antes** de usar **Descargar JSON Actualizado**, los cambios se pierden sin posibilidad de recuperación. Descarga siempre los archivos JSON antes de cerrar o recargar el panel.
+</Warning>
+
+## Comparación de uso cotidiano vs. administrativo
+
+| Aspecto | Generador (`index.html`) | Panel de Administración (`admin.html`) |
+|---|---|---|
+| **Frecuencia de uso** | Diario, en cada proceso de selección. | Ocasional, cuando se agrega o modifica el catálogo. |
+| **Quién lo usa** | Evaluadores, psicólogos. | Administradores, responsable técnico. |
+| **Requiere contraseña** | No. | Solo para guardar en GitHub. |
+| **Persistencia de datos** | Solo lectura; no modifica el catálogo. | Trabaja en memoria; los cambios persisten al guardar JSON. |
+| **Salida principal** | Material imprimible en A4. | Archivos JSON para actualizar el catálogo. |
+
+<CardGroup cols={2}>
+  <Card
+    title="Armar una evaluación"
+    icon="wand-magic-sparkles"
+    href="/generador/armar-evaluacion"
+  >
+    Guía paso a paso para usar el Generador: elegir cargo, postulantes y dinámicas, y obtener el material listo para imprimir.
+  </Card>
+  <Card
+    title="Áreas y cargos"
+    icon="sitemap"
+    href="/admin/areas-y-cargos"
+  >
+    Cómo crear y mantener el catálogo de áreas, cargos y dinámicas desde el Panel de Administración.
+  </Card>
+</CardGroup>

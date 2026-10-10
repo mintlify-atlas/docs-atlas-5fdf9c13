@@ -1,0 +1,148 @@
+---
+title: "Arquitectura del Gestor de Pruebas para Llamados"
+sidebarTitle: "Arquitectura"
+description: "Cómo se conectan el frontend estático, la Netlify Function y el repositorio GitHub bd donde viven los datos JSON."
+---
+
+El Gestor de Pruebas para Llamados está construido sobre tres capas que se complementan: un frontend completamente estático escrito en HTML5, CSS3 y JavaScript puro (sin frameworks ni paso de compilación), una única función serverless de Netlify que actúa como puente seguro hacia GitHub, y un repositorio separado (`FABIOR1981/bd`) que cumple el rol de base de datos almacenando los datos como archivos JSON. Esta separación permite desplegar el frontend en cualquier hosting estático mientras que los datos se gestionan de forma centralizada y versionada en GitHub.
+
+---
+
+## Visión general de las capas
+
+<CardGroup cols={3}>
+  <Card title="Frontend estático" icon="browser">
+    HTML5 / CSS3 / JavaScript sin frameworks ni build step. Sirve las pantallas Generador (`index.html`) y Panel de Administración (`admin.html`). Todo el procesamiento ocurre en el navegador del usuario.
+  </Card>
+  <Card title="Netlify Function" icon="bolt">
+    Un único endpoint serverless en `/.netlify/functions/pruebas`. Lee y escribe los archivos JSON en el repositorio `bd` mediante la API de GitHub. Es el único componente que conoce el token de GitHub y la clave de acceso.
+  </Card>
+  <Card title="Repositorio de datos (bd)" icon="database">
+    Repositorio `FABIOR1981/bd`, carpeta `pruebas_llamados/`. Contiene `areas.json`, `cargos.json`, `dinamicas.json` y el subdirectorio `informes/`. Es la única fuente de verdad: no hay base de datos relacional ni almacenamiento alternativo.
+  </Card>
+</CardGroup>
+
+---
+
+## Diagrama de arquitectura
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                       NAVEGADOR                         │
+│                                                         │
+│  index.html / admin.html                                │
+│       │                                                 │
+│  datos/datos.js  ──  Datos.cargar() / Datos.guardar()   │
+└────────────────────────┬────────────────────────────────┘
+                         │ HTTP (GET / POST)
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│               NETLIFY FUNCTION                          │
+│       /.netlify/functions/pruebas                       │
+│                                                         │
+│  · Autentica la clave (header X-Clave / body clave)     │
+│  · Llama a la API de GitHub con GITHUB_TOKEN_*          │
+└────────────────────────┬────────────────────────────────┘
+                         │ HTTPS — GitHub REST API
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│         REPOSITORIO  FABIOR1981/bd                      │
+│         rama: main  /  carpeta: pruebas_llamados/       │
+│                                                         │
+│  ├── areas.json                                         │
+│  ├── cargos.json                                        │
+│  ├── dinamicas.json                                     │
+│  ├── informes.json          ← índice de informes        │
+│  └── informes/                                          │
+│       └── INF-2026-001.json ← informe individual        │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Flujo de datos
+
+### Carga inicial (lectura)
+
+Cuando el navegador abre cualquiera de las dos pantallas, la secuencia es la siguiente:
+
+<Steps>
+  <Step title="Datos.cargar() en el cliente">
+    El script `datos/datos.js` ejecuta `Datos.cargar()`, que realiza un `GET` a `/.netlify/functions/pruebas` enviando la clave de acceso en el encabezado `X-Clave`.
+  </Step>
+  <Step title="La función consulta la API de GitHub">
+    La Netlify Function recibe la petición, usa el token `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` para autenticarse ante la API REST de GitHub y solicita los contenidos de `areas.json`, `cargos.json` y `dinamicas.json` en paralelo.
+  </Step>
+  <Step title="Respuesta al navegador">
+    La función combina los tres archivos en un único objeto JSON y lo devuelve al navegador. El cliente almacena el resultado en la variable global `baseDatosGlobal` para que todos los scripts puedan acceder a él.
+  </Step>
+</Steps>
+
+### Guardado (escritura)
+
+<Steps>
+  <Step title="Datos.guardar() en el cliente">
+    Desde el Panel de Administración, al presionar **Guardar en GitHub**, el script llama a `Datos.guardar()`, que realiza un `POST` a `/.netlify/functions/pruebas` con el cuerpo JSON que incluye el campo `clave` y los tres objetos de datos actualizados.
+  </Step>
+  <Step title="La función escribe en el repositorio">
+    La Netlify Function verifica la clave, y luego escribe o actualiza cada uno de los tres archivos JSON en el repositorio `bd` mediante la API de GitHub (operación `PUT` de contenido con el SHA del archivo previo para evitar conflictos).
+  </Step>
+  <Step title="Confirmación">
+    GitHub devuelve confirmación de escritura. La función responde al navegador con éxito y el panel muestra el estado actualizado.
+  </Step>
+</Steps>
+
+### Informes
+
+Los informes guardados siguen un flujo adicional: el informe completo se escribe en `informes/INF-YYYY-NNN.json` (donde `YYYY` es el año y `NNN` el número correlativo) y simultáneamente se actualiza el índice general en `informes.json` con los metadatos del nuevo informe.
+
+---
+
+## Decisiones de diseño clave
+
+<AccordionGroup>
+  <Accordion title="Sin paso de compilación (no build step)">
+    El directorio raíz del proyecto se publica tal cual en Netlify (`publish = "/"` en `netlify.toml`, sin `command` de build). No hay transpilación, empaquetado ni generación de assets. Esto simplifica el despliegue al máximo: cualquier cambio en un archivo HTML, CSS o JS se refleja inmediatamente al hacer commit y push.
+  </Accordion>
+
+  <Accordion title="GitHub como base de datos">
+    En lugar de una base de datos relacional o un servicio de almacenamiento dedicado, los datos viven como archivos JSON versionados en el repositorio `FABIOR1981/bd`. Esto ofrece historial de cambios gratuito (git log), facilidad de edición manual cuando es necesario, y no requiere infraestructura adicional. La contrapartida es que la escritura está sujeta a los límites de la API de GitHub y no es adecuada para escrituras concurrentes frecuentes.
+  </Accordion>
+
+  <Accordion title="Autenticación por clave compartida">
+    No existe un sistema de usuarios ni sesiones. La protección de las operaciones de escritura se implementa mediante una contraseña compartida almacenada en la variable de entorno `CLAVE_PRUEBAS` en Netlify. El cliente la envía en el encabezado `X-Clave` (en peticiones GET) o en el campo `clave` del cuerpo JSON (en peticiones POST). La función valida que coincida antes de ejecutar cualquier escritura.
+
+    <Warning>
+      Esta arquitectura es apropiada para equipos pequeños con acceso controlado a la URL de administración. No debe usarse en contextos donde distintos niveles de permiso sean necesarios.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Estado compartido mediante variables globales">
+    Las páginas cargan sus scripts en un orden fijo definido en el HTML y comparten estado a través de variables globales. La más importante es `baseDatosGlobal`, que el generador (`interfaz.js`) popula al cargar y que `informe.js` consume al construir el informe. El objeto `Datos` (expuesto por `datos/datos.js`) es la única interfaz de acceso a la API.
+
+    Si se modifica el orden de carga de scripts o se refactorizan módulos, debe verificarse que este contrato de globales se mantenga intacto.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Dependencia externa: Mammoth.js
+
+La única dependencia de terceros del frontend es **Mammoth.js 1.6.0**, que se carga dinámicamente desde `cdnjs.cloudflare.com` únicamente cuando el usuario activa el asistente **Directrices desde bases (IA)**. No se carga en ninguna otra situación, por lo que no afecta el tiempo de carga inicial de la aplicación.
+
+Si el entorno de red no permite acceder a CDNs externos, puede alojarse localmente y apuntar la constante `MAMMOTH_URL` en `bases_ia.js` a la ruta interna.
+
+---
+
+## Variables de entorno requeridas en Netlify
+
+| Variable | Obligatoria para | Descripción |
+|---|---|---|
+| `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` | Lectura (si `bd` es privado) y escritura | Token de acceso personal de GitHub con permisos de lectura/escritura sobre el repositorio `bd`. |
+| `CLAVE_PRUEBAS` | Escritura (Guardar en GitHub) | Contraseña que el Panel de Administración solicita al guardar. Sin esta variable, los intentos de guardar son rechazados. |
+
+Si el repositorio `bd` es público, la **lectura** puede funcionar sin token. Para entornos de desarrollo local, configure estas variables en un archivo `.env` que Netlify CLI cargue automáticamente; **no las guarde en el repositorio**.
+
+<Note>
+  Publicar únicamente los archivos estáticos —por ejemplo, en GitHub Pages— **no es suficiente**. La función `/.netlify/functions/pruebas` debe estar activa y accesible para que la aplicación pueda cargar y guardar datos. Sin ella, el Generador muestra el error de conexión y no carga ningún dato.
+</Note>

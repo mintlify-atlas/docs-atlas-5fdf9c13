@@ -1,0 +1,149 @@
+---
+title: "Variables de entorno del Gestor de Pruebas para Llamados"
+sidebarTitle: "Variables de Entorno"
+description: "Referencia de las dos variables de entorno requeridas en Netlify: GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD y CLAVE_PRUEBAS."
+---
+
+La función serverless `netlify/functions/pruebas.js` es el único componente del Gestor de Pruebas que se ejecuta fuera del navegador. Para operar, requiere exactamente dos variables de entorno: una contraseña que protege todos los accesos a la API, y un token de GitHub que permite leer y escribir los catálogos en el repositorio `bd`. Sin estas variables correctamente configuradas, la aplicación no puede cargar ni guardar datos, independientemente de cómo esté desplegada.
+
+## Resumen de variables
+
+Ambas variables se configuran en el panel de Netlify bajo **Site settings → Environment variables**.
+
+| Variable | Requerida | Uso |
+|---|---|---|
+| `CLAVE_PRUEBAS` | **Sí** — para toda operación | Contraseña que autentica todas las solicitudes a la API, tanto de lectura como de escritura. Sin ella, el servidor devuelve `500` con el mensaje `"El servidor no tiene configurada la contraseña."` |
+| `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD` | **Para lectura de repos privados y para cualquier escritura** | Token de GitHub con acceso al repositorio `bd`. Requerido si el repo es privado (lectura) y para cualquier operación de guardado. Sin él, solo funciona la lectura de repos públicos. |
+
+---
+
+## `CLAVE_PRUEBAS`
+
+`CLAVE_PRUEBAS` es la contraseña maestra de la aplicación. **Es requerida para todas las operaciones**, tanto de lectura como de escritura. Si no está configurada en el entorno del servidor, cualquier solicitud —incluso una simple carga del catálogo— devuelve error.
+
+### Cómo la usa el cliente
+
+El navegador envía la contraseña en dos formas según el tipo de operación:
+
+- **Solicitudes GET** (lectura de catálogos e informes): en el encabezado HTTP `X-Clave`.
+- **Solicitudes POST** (guardado de catálogos e informes): en el campo `clave` del cuerpo JSON.
+
+La contraseña se almacena en `sessionStorage` del navegador, lo que significa que **se borra automáticamente al cerrar la pestaña**. Cada nueva sesión requiere ingresar la contraseña nuevamente.
+
+### Qué ocurre si no está configurada
+
+Si la variable no existe en el entorno de Netlify, el servidor responde inmediatamente con:
+
+```json
+{
+  "error": "El servidor no tiene configurada la contraseña."
+}
+```
+
+con código de estado `500`. Esto bloquea la carga inicial del catálogo, por lo que la aplicación mostrará error de conexión aunque el repositorio de datos sea accesible.
+
+### Seguridad
+
+<Note>
+La comparación de la contraseña recibida con `CLAVE_PRUEBAS` se realiza con `crypto.timingSafeEqual`, que evita ataques de temporización (*timing attacks*). Usa una contraseña larga y aleatoria; una cadena corta o predecible anula esa protección.
+</Note>
+
+---
+
+## `GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD`
+
+Este token permite que la función serverless acceda a la API de GitHub para leer y escribir los archivos JSON del repositorio `bd` (`areas.json`, `cargos.json`, `dinamicas.json` e `informes.json`).
+
+### Cuándo es requerido
+
+| Operación | Repo público | Repo privado |
+|---|---|---|
+| Lectura del catálogo (GET) | No requerido | **Requerido** |
+| Guardado del catálogo (POST) | **Requerido** | **Requerido** |
+| Guardado o lectura de informes (POST/GET) | **Requerido** | **Requerido** |
+
+<Note>
+Si el repositorio `bd` es **público**, la lectura del catálogo puede funcionar sin token. Sin embargo, cualquier operación de escritura —incluyendo el guardado desde el panel de administración— siempre requiere el token, independientemente de la visibilidad del repositorio.
+</Note>
+
+### Permisos necesarios del token
+
+El token de GitHub debe tener acceso al repositorio `bd` con los siguientes permisos:
+
+- `contents: read` — para leer los archivos JSON del catálogo.
+- `contents: write` — para crear o actualizar archivos JSON al guardar.
+
+Se puede usar tanto un **token clásico** (con scope `repo`) como un **fine-grained token** (con permisos explícitos sobre el repositorio específico). Se recomienda el fine-grained token para limitar el alcance al mínimo necesario.
+
+### Qué ocurre si no está configurado para escritura
+
+Si la variable no está configurada y el cliente envía una solicitud POST, el servidor responde con:
+
+```json
+{
+  "error": "El servidor no tiene configurado el guardado."
+}
+```
+
+con código de estado `500`. Las operaciones de lectura sobre un repositorio público seguirán funcionando normalmente.
+
+---
+
+## Desarrollo local
+
+Para replicar el entorno de producción en local con Netlify CLI, las variables deben estar disponibles en el entorno del proceso. La forma recomendada es crear un archivo `.env` en la raíz del proyecto:
+
+```bash .env
+CLAVE_PRUEBAS=tu_contraseña_segura
+GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Netlify CLI carga automáticamente este archivo al ejecutar `npx netlify dev`.
+
+Alternativamente, puedes declarar las variables directamente en `netlify.toml` bajo el contexto de desarrollo:
+
+```toml netlify.toml
+[context.dev.environment]
+  CLAVE_PRUEBAS = "tu_contraseña_segura"
+  GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD = "ghp_..."
+```
+
+<Warning>
+**Nunca hagas commit de secretos al repositorio.** Tanto el archivo `.env` como cualquier archivo que contenga tokens o contraseñas deben estar listados en `.gitignore`. Si expones un token de GitHub por accidente, revócalo de inmediato desde **GitHub → Settings → Developer settings → Personal access tokens**.
+</Warning>
+
+---
+
+## Referencia en el código fuente
+
+A continuación se muestra exactamente cómo la función `pruebas.js` utiliza cada variable de entorno:
+
+```javascript netlify/functions/pruebas.js
+// CLAVE_PRUEBAS: valida todas las solicitudes (lectura y escritura)
+const claveOk = c =>
+  Boolean(process.env.CLAVE_PRUEBAS) &&
+  igual(c || '', process.env.CLAVE_PRUEBAS);
+
+// GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD: se incluye en los encabezados hacia la API de GitHub
+const cab = (conToken = false) => ({
+  Accept: 'application/vnd.github+json',
+  'User-Agent': 'gestor-pruebas',
+  ...(conToken
+    ? { Authorization: 'Bearer ' + process.env.GITHUB_TOKEN_PRUEBAS_LLAMADOS_BD }
+    : {})
+});
+```
+
+La función `igual` que se usa dentro de `claveOk` es una comparación segura por tiempo:
+
+```javascript netlify/functions/pruebas.js
+const igual = (a, b) => {
+  const x = Buffer.from(String(a));
+  const y = Buffer.from(String(b));
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+};
+```
+
+<Tip>
+El token de GitHub solo se adjunta a las solicitudes cuando `conToken = true`. En la lectura de repositorios públicos, la función omite el encabezado `Authorization` para no exponer el token innecesariamente. Para repositorios privados y para cualquier escritura, siempre se utiliza `conToken = true`.
+</Tip>

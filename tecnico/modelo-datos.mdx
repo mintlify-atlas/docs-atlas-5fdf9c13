@@ -1,0 +1,174 @@
+---
+title: "Modelo de datos: areas.json, cargos.json y dinamicas.json"
+sidebarTitle: "Modelo de Datos"
+description: "Estructura completa de los tres archivos JSON que alimentan la aplicación, con ejemplos, relaciones y convenciones de códigos."
+---
+
+El **Gestor de Pruebas para Llamados** no tiene base de datos ni backend propio: toda la información del catálogo vive en tres archivos JSON alojados en el repositorio `FABIOR1981/bd`, dentro de la carpeta `pruebas_llamados/`. Cuando el navegador carga la aplicación, la función de Netlify `/.netlify/functions/pruebas` lee esos tres archivos desde GitHub y los entrega al frontend; a partir de ese momento, todo el procesamiento (filtrado, cálculo de tiempos, generación de puntajes) ocurre íntegramente en el cliente. Comprender la estructura de estos archivos es indispensable para mantener el catálogo, corregir errores de datos o incorporar los bloques JSON que genera el asistente de IA.
+
+<Note>
+  Los datos **no se guardan en el proyecto de la aplicación**. Si la función de Netlify no está disponible, la app muestra un error de conexión y no carga ningún dato local de respaldo. Para publicar cambios, usá el botón **Guardar en GitHub** del panel de administración.
+</Note>
+
+---
+
+## Relaciones entre los tres archivos
+
+Los tres JSON se relacionan mediante cadenas de texto que deben coincidir exactamente. El siguiente diagrama resume la cadena de referencia:
+
+```text
+areas.json          cargos.json                       dinamicas.json
+ "FIN" ──────────▶  "CAR-FIN-CON-01"  ◀──────────────  "cargo_id": "CAR-FIN-CON-01"
+ (sigla)             area = "Finanzas"                  id = "DIN-FIN-CON-01"
+```
+
+Dos reglas clave se desprenden de este diagrama:
+
+- Un cargo guarda el **nombre** del área (campo `area`), no la sigla. La sigla queda implícita dentro del código del cargo (`CAR-FIN-…` → área `FIN`).
+- Una dinámica se vincula a su cargo mediante el campo `cargo_id`, que debe coincidir **exactamente** —carácter por carácter, incluyendo mayúsculas y guiones— con la clave del cargo en `cargos.json`.
+
+<Warning>
+  Si `cargo_id` en una dinámica no coincide exactamente con la clave del cargo, la dinámica no aparecerá en el generador al seleccionar ese cargo. Revisá siempre la clave con un validador JSON antes de publicar.
+</Warning>
+
+---
+
+## Convenciones de códigos
+
+El panel de administración genera los códigos automáticamente siguiendo estas reglas. Si editás los JSON a mano, respetá el mismo formato para evitar colisiones:
+
+| Elemento | Formato | Cómo se genera |
+|---|---|---|
+| Área | `AAA` — 3 letras | Sigla ingresada por el usuario; se convierte a mayúsculas y no se permiten duplicados. |
+| Cargo | `CAR-<área>-<esp>-<NN>` | `<esp>` = hasta 3 letras del nombre del cargo, completadas con `X` si son menos. `NN` = mayor número existente con ese prefijo + 1. |
+| Dinámica | `DIN-<área>-<esp>-<NN>` | Prefijo tomado del código del cargo asociado; `NN` = mayor número existente + 1. |
+
+<Tip>
+  El campo `<esp>` del cargo se completa con `X` para mantener siempre cuatro segmentos en el código. Por ejemplo, un cargo «Operador» en el área `OPE` con especialidad `OP` producirá el código `CAR-OPE-OPX-01`.
+</Tip>
+
+---
+
+## areas.json
+
+`areas.json` es un **objeto JSON** cuya clave es la sigla del área (3 letras, mayúsculas) y cuyo valor es un objeto con el nombre legible. Es el archivo más simple de los tres.
+
+```json areas.json
+{
+    "FIN": { "nombre": "Finanzas" },
+    "OPE": { "nombre": "Operativa" }
+}
+```
+
+<Note>
+  Renombrar o eliminar un área **requiere editar este archivo a mano** y actualizar el campo `area` de todos los cargos asociados. El panel de administración no ofrece esa operación para evitar inconsistencias.
+</Note>
+
+---
+
+## cargos.json
+
+`cargos.json` es un **objeto JSON** cuya clave es el código del cargo (`CAR-…`). Cada cargo contiene su nombre, el nombre del área a la que pertenece y el listado de **competencias**, que definen las columnas de la tabla de puntaje.
+
+```json cargos.json
+{
+    "CAR-FIN-CON-01": {
+        "nombre": "Contador",
+        "area": "Finanzas",
+        "competencias": [
+            {
+                "comp": "Pensamiento Analítico",
+                "desc": "Analiza con lógica y detecta incoherencias."
+            },
+            {
+                "comp": "Método y Criterio Profesional",
+                "desc": "Aplica procedimientos con rigor técnico.",
+                "codigo": "MAC"
+            }
+        ]
+    }
+}
+```
+
+### Campos de cada competencia
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `comp` | `string` | Nombre de la competencia; aparece como encabezado de columna en la tabla de puntaje. |
+| `desc` | `string` | Descripción breve que se muestra en la leyenda del informe del evaluador. |
+| `codigo` | `string` | **Opcional.** Código corto (p. ej. `"MAC"`). Cuando una dinámica referencia uno o más códigos, solo las competencias con esos códigos aplican a esa dinámica. |
+
+<Warning>
+  Los cargos creados desde el panel de administración reciben automáticamente **dos competencias de ejemplo con texto provisional**. Esas competencias deben reemplazarse editando `cargos.json` a mano antes de usar el cargo en una evaluación real. El panel ABM no permite editar competencias de forma directa.
+</Warning>
+
+---
+
+## dinamicas.json
+
+`dinamicas.json` es un **arreglo JSON** de objetos. Cada objeto representa una dinámica de evaluación y contiene toda la información necesaria para armar el informe del evaluador, las hojas del postulante y la tabla de puntaje.
+
+```json dinamicas.json
+[
+    {
+        "id": "DIN-FIN-CON-01",
+        "cargo_id": "CAR-FIN-CON-01",
+        "titulo": "Análisis de Inconsistencias",
+        "desc": "El postulante revisa un balance con errores y debe identificarlos.",
+        "tiempo_limite": "8 Minutos",
+        "hoja_postulante": "Revise el siguiente balance e identifique las inconsistencias.\n\n<div class='renglon-respuesta'></div><div class='renglon-respuesta'></div>",
+        "caso_o_consigna": "Evalúa la capacidad de detectar errores numéricos bajo presión temporal.",
+        "guia_evaluacion": "• Éxito: identifica al menos 3 de los 4 errores.\n• Alerta: no detecta errores evidentes o tarda más del tiempo límite.",
+        "respuesta_esperada": "Errores: fila 3 (suma incorrecta), columna B (importe negativo sin justificación)..."
+    }
+]
+```
+
+### Referencia de campos
+
+| Campo | Tipo | Uso |
+|---|---|---|
+| `id` | `string` | Código único de la dinámica, generado automáticamente por el panel. |
+| `cargo_id` | `string` | Debe coincidir exactamente con la clave del cargo en `cargos.json`. |
+| `titulo` | `string` | Nombre corto de la dinámica; se muestra en la interfaz y en los documentos impresos. |
+| `desc` | `string` | Descripción breve que aparece en el informe del evaluador. |
+| `tiempo_limite` | `string` | Texto libre. El generador extrae todos los números del texto y toma el mayor como minutos de esa dinámica para el cálculo del tiempo total. |
+| `hoja_postulante` | `string` | Consigna para el candidato. Admite HTML seguro; los `\n` se respetan por `white-space: pre-line`. Los `<div class='renglon-respuesta'>` al final se agregan como renglones en blanco para escribir. |
+| `caso_o_consigna` | `string` | Objetivo de la prueba; se muestra en el informe del evaluador. |
+| `guia_evaluacion` | `string` | Guía de observación para el evaluador; los `\n` se convierten en `<br>`. |
+| `respuesta_esperada` | `string` | Corrector para el evaluador; los `\n` se convierten en `<br>`. |
+| `peso` | `number` | **Opcional.** Pondera la dinámica en el cálculo del puntaje final normalizado. |
+| `renglones_hoja` | `number` | **Opcional (0–30).** Cantidad de renglones en blanco al final de la hoja del postulante. El panel ABM separa estos renglones para mostrarlos en el campo numérico y los recompone al guardar. |
+
+<Tip>
+  Para agregar renglones de respuesta en la hoja del postulante, lo más sencillo es usar el campo **Renglones para escribir** del panel de administración al crear o editar una dinámica. El panel traduce ese número a los `<div class='renglon-respuesta'>` equivalentes automáticamente.
+</Tip>
+
+### Comportamiento de `tiempo_limite`
+
+La función `minutosDe()` en `script.js` extrae todos los números de la cadena y toma el mayor como valor en minutos. Algunos ejemplos:
+
+| Valor en `tiempo_limite` | Minutos computados |
+|---|---|
+| `"8 Minutos"` | 8 |
+| `"Aprox. 5 a 8 minutos"` | 8 |
+| `"2 Minutos de Simulación"` | 2 |
+| `"Sin límite"` | 0 |
+
+---
+
+## Fórmula de puntaje
+
+Con **c** competencias definidas en el cargo y **d** dinámicas seleccionadas para la evaluación, cada celda de la tabla de puntaje se califica en una escala de **0 a 5**:
+
+| Nivel | Máximo posible |
+|---|---|
+| Por dinámica (fila) | *c* × 5 |
+| Por competencia (columna) | *d* × 5 |
+| Total general | *c* × *d* × 5 |
+
+El puntaje total se normaliza a **30 puntos**. Si alguna dinámica tiene el campo `peso` definido, ese valor pondera su contribución al puntaje final.
+
+<Note>
+  El campo `codigo` en las competencias del cargo permite restringir qué competencias aplican a cada dinámica. Si una dinámica referencia códigos de competencia específicos en su campo `caso_o_consigna`, solo esas columnas se incluyen en el cálculo de la fila correspondiente.
+</Note>

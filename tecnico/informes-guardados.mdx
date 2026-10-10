@@ -1,0 +1,386 @@
+---
+title: "Informes guardados: guardar, listar y recuperar evaluaciones"
+sidebarTitle: "Informes Guardados"
+description: "Cómo funcionan los informes guardados: estructura INF-YYYY-NNN, endpoints para listar y leer, y el manejo de conflictos de nombres."
+---
+
+Los informes guardados permiten conservar una instantánea completa de una sesión de evaluación — cargo elegido, dinámicas seleccionadas, cantidad de postulantes y configuración de tiempos — para recuperarla o consultarla en el futuro. Cada informe se almacena como un archivo JSON independiente en el repositorio `FABIOR1981/bd` bajo la carpeta `pruebas_llamados/informes/`, identificado con un código secuencial del tipo `INF-2025-001`. Un archivo índice liviano (`informes.json`) mantiene el listado de todos los informes con sus metadatos, evitando que sea necesario leer el contenido completo de cada uno para mostrar la lista.
+
+## Estructura de almacenamiento
+
+```
+pruebas_llamados/
+├── areas.json
+├── cargos.json
+├── dinamicas.json
+├── informes.json              ← índice liviano (array de entradas)
+└── informes/
+    ├── INF-2025-001.json      ← informe completo
+    ├── INF-2025-002.json
+    └── ...
+```
+
+<Note>
+`informes.json` contiene solo los metadatos de cada informe (código, nombre, fecha, área, cargo, cantidad de postulantes). El contenido completo de la evaluación — incluyendo todas las dinámicas con sus consignas y puntajes — vive en el archivo individual `informes/<código>.json`.
+</Note>
+
+---
+
+## Formato del código de informe
+
+Los informes se identifican con el patrón `INF-<año>-<NNN>`:
+
+| Parte | Descripción | Ejemplo |
+|-------|-------------|---------|
+| `INF-` | Prefijo fijo | `INF-` |
+| `<año>` | Año de creación (4 dígitos) | `2025` |
+| `<NNN>` | Número secuencial dentro del año, mínimo 3 dígitos | `001`, `042`, `1000` |
+
+**Ejemplo:** `INF-2025-001`, `INF-2025-042`, `INF-2026-001`
+
+El número secuencial se calcula automáticamente en el servidor: se toma el mayor número existente en el índice para el año actual y se le suma uno. Si no hay informes para ese año, comienza en `001`.
+
+### Manejo de conflictos por guardados simultáneos
+
+Si dos usuarios intentan guardar un informe al mismo tiempo, pueden entrar en conflicto al intentar escribir con el mismo SHA en GitHub. La función maneja esto con un mecanismo de reintentos automáticos:
+
+<Steps>
+  <Step title="Primer intento">
+    Se lee el índice, se calcula el código y se escribe el archivo del informe.
+  </Step>
+  <Step title="Detección de conflicto">
+    Si GitHub responde `409` o `422` al escribir el archivo del informe o al actualizar el índice, se detecta un conflicto.
+  </Step>
+  <Step title="Espera y reintento">
+    Se espera `120ms × número_de_intento` (120ms, 240ms, 360ms…) y se vuelve al primer paso con el índice actualizado.
+  </Step>
+  <Step title="Límite de reintentos">
+    Si tras **6 intentos** sigue sin poder guardar, la función lanza un error `500` con el mensaje: *"No se pudo guardar: otro guardado simultáneo ocupó el índice. Intente de nuevo."*
+  </Step>
+</Steps>
+
+---
+
+## GET `?informes=1` — Listar todos los informes
+
+Devuelve el array del índice `informes.json` con las entradas livianas de todos los informes guardados. Si no existe ningún informe todavía, devuelve un array vacío.
+
+### Solicitud
+
+```http
+GET /.netlify/functions/pruebas?informes=1
+X-Clave: <contraseña>
+```
+
+### Respuesta exitosa `200`
+
+```json
+[
+  {
+    "codigo": "INF-2025-001",
+    "nombre": "Evaluación Contador - Enero 2025",
+    "fecha_evaluacion": "2025-01-15",
+    "creado": "2025-01-15T10:30:00.000Z",
+    "actualizado": "2025-01-15T10:30:00.000Z",
+    "area": "FIN",
+    "area_nombre": "Finanzas",
+    "cargo": "CAR-FIN-CON-01",
+    "cargo_nombre": "Contador",
+    "dinamicas": ["DIN-FIN-CON-01", "DIN-FIN-CON-02"],
+    "postulantes": 3
+  }
+]
+```
+
+<ResponseField name="codigo" type="string">
+  Identificador único del informe con formato `INF-YYYY-NNN`.
+</ResponseField>
+
+<ResponseField name="nombre" type="string">
+  Nombre legible asignado al informe al momento del guardado.
+</ResponseField>
+
+<ResponseField name="fecha_evaluacion" type="string">
+  Fecha de la evaluación en formato `YYYY-MM-DD`.
+</ResponseField>
+
+<ResponseField name="creado" type="string">
+  Timestamp ISO 8601 de la primera creación del informe.
+</ResponseField>
+
+<ResponseField name="actualizado" type="string">
+  Timestamp ISO 8601 de la última modificación.
+</ResponseField>
+
+<ResponseField name="area" type="string">
+  Sigla del área (p. ej. `"FIN"`).
+</ResponseField>
+
+<ResponseField name="area_nombre" type="string">
+  Nombre completo del área.
+</ResponseField>
+
+<ResponseField name="cargo" type="string">
+  Código del cargo (p. ej. `"CAR-FIN-CON-01"`).
+</ResponseField>
+
+<ResponseField name="cargo_nombre" type="string">
+  Nombre del cargo.
+</ResponseField>
+
+<ResponseField name="dinamicas" type="array">
+  Array con los `id` de las dinámicas incluidas en el informe.
+</ResponseField>
+
+<ResponseField name="postulantes" type="integer">
+  Cantidad de postulantes evaluados.
+</ResponseField>
+
+### Códigos de respuesta
+
+| Código | Descripción |
+|--------|-------------|
+| `200`  | Array de entradas (vacío `[]` si no hay informes) |
+| `401`  | Contraseña inválida |
+| `500`  | Error de servidor |
+
+---
+
+## GET `?informe=<código>` — Leer un informe completo
+
+Devuelve el contenido íntegro de un informe específico, incluyendo todos los datos de la evaluación.
+
+### Solicitud
+
+```http
+GET /.netlify/functions/pruebas?informe=INF-2025-001
+X-Clave: <contraseña>
+```
+
+<ParamField query="informe" type="string" required>
+  Código del informe a leer. Debe coincidir exactamente con el patrón `INF-DDDD-DDD+` (4 dígitos de año, guion, 3 o más dígitos de número). Si el formato no es válido, la función responde `400` sin consultar GitHub.
+</ParamField>
+
+### Respuesta exitosa `200`
+
+Devuelve el objeto completo del informe, que incluye todos los campos del índice más el detalle de las dinámicas:
+
+```json
+{
+  "codigo": "INF-2025-001",
+  "nombre": "Evaluación Contador - Enero 2025",
+  "fecha_evaluacion": "2025-01-15",
+  "creado": "2025-01-15T10:30:00.000Z",
+  "actualizado": "2025-01-15T10:30:00.000Z",
+  "postulantes": 3,
+  "tiempo_total": 24,
+  "guia": true,
+  "area": { "sigla": "FIN", "nombre": "Finanzas" },
+  "cargo": {
+    "codigo": "CAR-FIN-CON-01",
+    "nombre": "Contador",
+    "competencias": [
+      { "comp": "Pensamiento Analítico", "desc": "Analiza con lógica y detecta incoherencias." }
+    ]
+  },
+  "dinamicas": [
+    {
+      "id": "DIN-FIN-CON-01",
+      "titulo": "Análisis de estados contables",
+      "desc": "...",
+      "tiempo_limite": "10 Minutos",
+      "hoja_postulante": "...",
+      "caso_o_consigna": "...",
+      "guia_evaluacion": "...",
+      "respuesta_esperada": "..."
+    }
+  ]
+}
+```
+
+### Códigos de respuesta
+
+| Código | Descripción |
+|--------|-------------|
+| `200`  | Informe completo |
+| `400`  | Código con formato inválido (no cumple `INF-DDDD-DDD+`) |
+| `401`  | Contraseña inválida |
+| `404`  | No existe ningún informe con ese código |
+| `500`  | Error de servidor |
+
+---
+
+## POST (accion: guardar_informe) — Guardar un informe
+
+Crea un informe nuevo o actualiza uno existente. La **identidad del informe se basa en el nombre**: si ya existe un informe con el mismo nombre (comparación sin tildes, sin distinción de mayúsculas y sin espacios extra), el sistema lo reconoce como el mismo y conserva su código original.
+
+### Solicitud
+
+```http
+POST /.netlify/functions/pruebas
+Content-Type: application/json
+```
+
+```json
+{
+  "clave": "<contraseña>",
+  "accion": "guardar_informe",
+  "reemplazar": false,
+  "informe": {
+    "nombre": "Evaluación Contador - Enero 2025",
+    "fecha_evaluacion": "2025-01-15",
+    "postulantes": 3,
+    "tiempo_total": 24,
+    "guia": true,
+    "area": { "sigla": "FIN", "nombre": "Finanzas" },
+    "cargo": {
+      "codigo": "CAR-FIN-CON-01",
+      "nombre": "Contador",
+      "competencias": []
+    },
+    "dinamicas": [
+      { "id": "DIN-FIN-CON-01", "titulo": "Análisis de estados contables" }
+    ]
+  }
+}
+```
+
+### Parámetros del cuerpo
+
+<ParamField body="clave" type="string" required>
+  Contraseña de acceso.
+</ParamField>
+
+<ParamField body="accion" type="string" required>
+  Debe ser exactamente `"guardar_informe"` para distinguir esta acción del guardado de catálogo.
+</ParamField>
+
+<ParamField body="reemplazar" type="boolean">
+  Si es `false` (por defecto) y ya existe un informe con el mismo nombre, el servidor responde `409` sin guardar nada. Si es `true`, el informe existente se actualiza con los nuevos datos.
+</ParamField>
+
+<ParamField body="informe" type="object" required>
+  Objeto con los datos de la evaluación a guardar. Ver reglas de validación más abajo.
+</ParamField>
+
+### Respuesta exitosa `200`
+
+```json
+{
+  "ok": true,
+  "codigo": "INF-2025-001",
+  "actualizado": false
+}
+```
+
+<ResponseField name="ok" type="boolean">
+  Siempre `true`.
+</ResponseField>
+
+<ResponseField name="codigo" type="string">
+  Código asignado al informe. Si es un informe nuevo, es el código recién generado. Si se actualizó uno existente, es su código original.
+</ResponseField>
+
+<ResponseField name="actualizado" type="boolean">
+  `false` si se creó un informe nuevo. `true` si se actualizó uno existente.
+</ResponseField>
+
+### Respuesta de conflicto `409`
+
+Se devuelve cuando `reemplazar` es `false` y ya existe un informe con el mismo nombre:
+
+```json
+{
+  "error": "nombre_existe",
+  "codigo": "INF-2025-001",
+  "nombre": "Evaluación Contador - Enero 2025",
+  "mensaje": "Ya existe el informe \"Evaluación Contador - Enero 2025\" (INF-2025-001)."
+}
+```
+
+<Tip>
+Al recibir un `409`, el cliente puede mostrar al usuario un mensaje de confirmación y, si acepta sobreescribir, reenviar la misma petición con `"reemplazar": true`. El campo `codigo` del `409` indica qué informe se actualizaría.
+</Tip>
+
+### Códigos de respuesta
+
+| Código | Descripción |
+|--------|-------------|
+| `200`  | Informe guardado o actualizado correctamente |
+| `400`  | Error de validación (ver detalles más abajo) |
+| `401`  | Contraseña incorrecta |
+| `409`  | Ya existe un informe con ese nombre y `reemplazar` es `false` |
+| `500`  | Error de GitHub o servidor |
+
+---
+
+## Reglas de validación del informe
+
+La función `validarInforme` verifica cada campo antes de escribir nada en GitHub. Si alguna regla no se cumple, devuelve `400` con el mensaje correspondiente.
+
+| Campo | Tipo | Regla |
+|-------|------|-------|
+| `nombre` | `string` | Requerido, entre 1 y 80 caracteres (después de eliminar espacios extremos) |
+| `fecha_evaluacion` | `string` | Formato `YYYY-MM-DD`, debe ser una fecha de calendario válida |
+| `postulantes` | `integer` | Número entero entre 1 y 10 |
+| `area` | `object` | Debe tener `sigla` (string) y `nombre` (string) |
+| `cargo` | `object` | Debe tener `codigo` (string), `nombre` (string) y `competencias` (array) |
+| `dinamicas` | `array` | No vacío, máximo 30 elementos; cada elemento debe tener `id` (string) y `titulo` (string) |
+| `tiempo_total` | `number \| null` | `null` o número finito entre 0 y 999 |
+| `guia` | `boolean` | Requerido; indica si el informe incluye guía de observación y corrector |
+| Tamaño total | — | La serialización JSON del informe no puede superar **300.000 caracteres** |
+
+<Warning>
+El límite de 300.000 caracteres del JSON incluye el contenido de las consignas, guías de evaluación y respuestas esperadas de todas las dinámicas. Informes con muchas dinámicas extensas pueden acercarse a este límite.
+</Warning>
+
+---
+
+## Deduplicación por nombre
+
+El sistema no usa el código del informe como clave de identidad para los guardados: usa el **nombre normalizado**. La normalización elimina tildes, convierte a minúsculas y colapsa espacios múltiples. Esto significa:
+
+- `"Evaluación Contador - Enero 2025"` y `"evaluacion contador - enero 2025"` son **el mismo informe**.
+- Guardar con el mismo nombre (aunque cambie el contenido) **actualiza** el informe existente y conserva su código.
+- Guardar con un nombre diferente **crea un informe nuevo** con un código nuevo.
+
+---
+
+## Uso desde el cliente (`datos/datos.js`)
+
+El objeto `Datos` expone tres métodos para gestionar informes. Como todos los métodos del objeto, manejan automáticamente la solicitud y reintento de contraseña ante respuestas `401`.
+
+### `Datos.listarInformes()`
+
+```js
+const lista = await Datos.listarInformes();
+// lista → array de entradas del índice
+// lista → [] si no hay informes todavía
+```
+
+Llama a `GET /.netlify/functions/pruebas?informes=1`.
+
+### `Datos.leerInforme(codigo)`
+
+```js
+const informe = await Datos.leerInforme('INF-2025-001');
+// informe → objeto completo con todos los datos de la evaluación
+```
+
+Llama a `GET /.netlify/functions/pruebas?informe=<código>`. Si el código no existe, la promesa se rechaza con `{ status: 404 }`.
+
+### `Datos.guardarInforme(informe, opciones)`
+
+```js
+// Guardar (con protección contra sobreescritura):
+const resultado = await Datos.guardarInforme(informe, { clave: claveIngresada });
+// resultado → { ok: true, codigo: 'INF-2025-001', actualizado: false }
+
+// Guardar forzando sobreescritura de un nombre existente:
+const resultado = await Datos.guardarInforme(informe, {
+  clave: claveIngresada,
+  reemplazar: true
+});
+```
+
+Llama a `POST /.netlify/functions/pruebas` con `accion: "guardar_informe"`. Si recibe un `409`, la promesa se rechaza con `{ status: 409, detalle: { error, codigo, nombre, mensaje } }`, para que el código llamador pueda decidir si mostrar la confirmación de sobreescritura.

@@ -1,0 +1,90 @@
+---
+title: "Ocultar la guía de observación y el corrector al imprimir"
+sidebarTitle: "Guía y Corrector"
+description: "Usa el interruptor Guía y corrector para mostrar u ocultar las respuestas esperadas cuando el material puede quedar a la vista de candidatos."
+---
+
+El **Generador de Evaluaciones** incluye en el informe, junto a cada dinámica, la guía de observación y el corrector: indicadores de éxito y alerta para el evaluador, y las respuestas correctas o esperadas de cada prueba. Esta información es indispensable cuando el evaluador revisa el material en privado, pero puede comprometer la validez de la evaluación si llega a ser vista por los propios candidatos. El interruptor **Guía y corrector** permite activar o desactivar esa sección en un solo clic, tanto en pantalla como al imprimir.
+
+---
+
+## Qué hace el interruptor
+
+El interruptor **Guía y corrector** controla la visibilidad de dos bloques de cada dinámica:
+
+- **Guía de observación para el evaluador:** indicadores de qué constituye un buen desempeño (*Éxito*) y qué señala dificultades (*Alerta*).
+- **Corrector — respuestas correctas / esperadas:** las respuestas modelo que el evaluador usa para puntuar al postulante.
+
+Cuando el interruptor está **encendido**, ambos bloques se muestran en pantalla y se incluyen en la impresión. Cuando está **apagado**, esos bloques desaparecen tanto de la vista en pantalla como del documento impreso o exportado a PDF.
+
+<Note>
+  El interruptor **no elimina** el contenido del informe; solo lo oculta visualmente. Si vuelve a activarlo, la guía y el corrector reaparecen de inmediato sin necesidad de regenerar el formulario.
+</Note>
+
+---
+
+## Estado predeterminado
+
+El interruptor está **encendido de fábrica** (posición activa). Al generar un formulario por primera vez en cada sesión, la guía y el corrector siempre se muestran.
+
+---
+
+## Cuándo conviene apagarlo
+
+Apague el interruptor **Guía y corrector** cuando exista riesgo de que el material impreso quede a la vista de personas que no deberían ver las respuestas esperadas. Situaciones típicas:
+
+- El informe se imprime en una sala compartida donde otros candidatos pueden leer los documentos sobre la mesa.
+- El PDF se comparte digitalmente por error con personas ajenas al proceso de selección.
+- Las hojas se distribuyen antes de confirmar que el espacio de evaluación es privado.
+
+En estas situaciones, apague el interruptor **antes de presionar Imprimir Formulario** para obtener una versión del informe sin respuestas.
+
+---
+
+## Dónde está el interruptor
+
+El interruptor **Guía y corrector** aparece en **dos lugares** de la interfaz:
+
+<CardGroup cols={2}>
+  <Card title="Panel de control principal" icon="sliders">
+    En la barra de opciones superior, junto al botón **Imprimir Formulario**. Activo desde antes de generar el formulario.
+  </Card>
+  <Card title="Encabezado del formulario generado" icon="file-lines">
+    Justo encima del informe generado, como segundo punto de control para confirmar la configuración antes de imprimir.
+  </Card>
+</CardGroup>
+
+Ambos interruptores están sincronizados: activar uno activa el otro, y lo mismo al apagar. No importa cuál use; el resultado es idéntico.
+
+---
+
+## Cómo funciona técnicamente
+
+Cuando el interruptor se apaga, la función `sincGuia()` agrega la clase CSS `ocultar-guia` al contenedor del informe (`#hoja`). Esa clase oculta mediante reglas CSS todos los elementos con clase `.bloque-guia`, que son exactamente los bloques de guía de observación y corrector dentro de cada dinámica.
+
+```js
+const sincGuia = v => {
+  S.guia = v;
+  $('#guia').checked = v;
+  $('#guia2').checked = v;
+  $('#hoja').classList.toggle('ocultar-guia', !v);
+};
+```
+
+La ocultación aplica **tanto en pantalla como en la impresión**, porque la clase `ocultar-guia` tiene reglas tanto en los estilos normales como dentro del bloque `@media print`. Esto garantiza que lo que se ve en pantalla es exactamente lo que saldrá impreso o en PDF.
+
+Al preparar la impresión, la función `preparaImpresion()` copia el contenido del informe al área de impresión respetando el estado del interruptor en ese momento:
+
+```js
+const preparaImpresion = () => {
+  const z = $('#zonaImpresion');
+  z.className = 'print-container' + (S.guia ? '' : ' ocultar-guia');
+  z.innerHTML = $('#hoja').innerHTML;
+};
+```
+
+---
+
+<Tip>
+  Para compartir el material de evaluación de forma segura, exporte a PDF con el interruptor apagado. Obtendrá un archivo que solo contiene las dinámicas, los tiempos y las consignas, sin guías ni respuestas. Ese PDF puede enviarse a co-evaluadores o archivarse sin riesgo de exponer las claves de corrección.
+</Tip>

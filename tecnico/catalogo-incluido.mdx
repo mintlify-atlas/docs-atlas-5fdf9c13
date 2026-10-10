@@ -1,0 +1,87 @@
+---
+title: "Catálogo inicial de áreas, cargos y dinámicas incluidas"
+sidebarTitle: "Catálogo Inicial"
+description: "Referencia de los 4 áreas, 5 cargos y 25 dinámicas incluidas en el catálogo inicial, con sus competencias asociadas."
+---
+
+El **Gestor de Pruebas para Llamados** se entrega con un catálogo inicial listo para usar, pensado para los perfiles más frecuentes en procesos de selección logística, administrativa y contable. Ese catálogo vive en el repositorio `FABIOR1981/bd`, carpeta `pruebas_llamados/`, y es la **fuente de verdad** de la aplicación: todo lo que el generador muestra, el panel de administración gestiona y el asistente de IA extiende parte de esos tres archivos JSON. Esta página documenta el estado del catálogo en el momento de redacción de la documentación; como los datos se actualizan directamente en `bd`, los números reales pueden ser mayores.
+
+<Note>
+  El conteo de áreas, cargos y dinámicas mostrado aquí era exacto al momento de escribir esta documentación. El repositorio `FABIOR1981/bd` es la fuente de verdad y los números pueden cambiar cuando se actualicen esos JSON.
+</Note>
+
+---
+
+## Cargos y competencias del catálogo inicial
+
+El catálogo inicial incluye **5 cargos** distribuidos en **4 áreas**, cada uno con 3 competencias y 4 dinámicas de evaluación:
+
+| Cargo | Código | Área | Competencias | Dinámicas |
+|---|---|---|---|---|
+| Carga / Descarga | `CAR-OPE-CAR-01` | Operativa | Actitud hacia la Normativa · Resistencia / Dinamismo · Trabajo en Equipo | 4 |
+| Administrativo | `CAR-ADM-GEN-01` | Administración | Atención al Detalle y Orden · Gestión del Tiempo · Comunicación Efectiva | 4 |
+| Encargado | `CAR-SUP-ENC-01` | Supervisión | Liderazgo Práctico · Toma de Decisiones · Orientación a Resultados | 4 |
+| Jefe | `CAR-SUP-JEF-01` | Supervisión | Visión Estratégica · Negociación e Influencia · Gestión de Crisis | 4 |
+| Contador | `CAR-FIN-CON-01` | Finanzas | Método y Criterio Profesional · Pensamiento Analítico · Integridad y Confidencialidad | 4 |
+
+<Note>
+  Los cargos **Encargado** y **Jefe** comparten el área de Supervisión (`CAR-SUP-…`). Esto significa que sus dinámicas también comparten el prefijo `DIN-SUP-…`, aunque cada una está vinculada a su cargo mediante el campo `cargo_id`.
+</Note>
+
+---
+
+## Cómo extender el catálogo
+
+<CardGroup cols={2}>
+  <Card title="Agregar dinámicas manualmente" icon="list-plus" href="/admin/dinamicas">
+    Desde el panel de administración podés crear dinámicas nuevas para cualquier cargo existente. El código se genera automáticamente siguiendo la convención `DIN-<área>-<esp>-<NN>`.
+  </Card>
+  <Card title="Generar dinámicas con IA" icon="sparkles" href="/ia/como-funciona">
+    El asistente de IA lee las bases del llamado en formato `.docx`, anonimiza los datos sensibles y arma un *prompt* para que un modelo de lenguaje proponga dinámicas listas para pegar en los JSON.
+  </Card>
+</CardGroup>
+
+---
+
+## Agregar nuevos cargos
+
+Para incorporar un cargo que no existe en el catálogo, usá el panel de administración en la sección de áreas y cargos:
+
+<Card title="Gestionar áreas y cargos" icon="briefcase" href="/admin/areas-y-cargos">
+  Creá áreas nuevas con su sigla de 3 letras y cargos con sus nombres. El código del cargo (`CAR-…`) se genera solo. Recordá que las competencias del nuevo cargo se crean como marcadores de posición y deben editarse en `cargos.json` antes de usar ese cargo en una evaluación.
+</Card>
+
+<Warning>
+  Los cargos creados desde el panel reciben **dos competencias de ejemplo** que no reflejan ningún perfil real. Antes de generar una evaluación con ese cargo, editá `cargos.json` en el repositorio `bd` para definir las competencias correctas. El panel ABM no permite modificar competencias directamente.
+</Warning>
+
+---
+
+## Flujo recomendado para nuevos despliegues
+
+Si estás implementando la aplicación para una organización por primera vez, seguí este orden para asegurar que el catálogo sea coherente con el perfil de la organización:
+
+<Steps>
+  <Step title="Revisá el catálogo inicial">
+    Abrí el generador y recorrés los cargos disponibles. Evaluá cuáles se ajustan directamente al organigrama de la organización y cuáles requieren adaptación o son innecesarios.
+  </Step>
+  <Step title="Adaptá las dinámicas existentes">
+    Para los cargos que se acercan al perfil buscado, revisá las 4 dinámicas incluidas desde el panel de administración. Podés editar consignas, guías de observación y respuestas esperadas para que reflejen el contexto real de la organización.
+  </Step>
+  <Step title="Ajustá las competencias en el JSON">
+    Si los nombres o descripciones de las competencias de un cargo no son adecuados, editá `cargos.json` directamente en el repositorio `bd`. Esta es la única forma de modificar competencias: el panel ABM no lo permite.
+  </Step>
+  <Step title="Creá los cargos que falten">
+    Para los perfiles que no tienen equivalente en el catálogo, usá el panel de administración para crear el área (si no existe) y el cargo. Luego editá `cargos.json` para definir las competencias reales.
+  </Step>
+  <Step title="Cargá las dinámicas nuevas">
+    Con los cargos y competencias definidos, creá las dinámicas desde el panel o usá el asistente de IA para generarlas a partir de las bases del llamado. Verificá el JSON resultante antes de guardarlo.
+  </Step>
+  <Step title="Guardá y publicá">
+    Usá el botón **Guardar en GitHub** del panel para escribir los cambios en el repositorio `bd`. Netlify detectará el cambio y desplegará la versión actualizada automáticamente.
+  </Step>
+</Steps>
+
+<Tip>
+  Si la organización tiene bases de llamados en formato `.docx`, el asistente de IA puede acelerar significativamente la creación de dinámicas para cargos nuevos. El archivo se procesa completamente en el navegador y no se envía a ningún servidor.
+</Tip>

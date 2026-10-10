@@ -1,0 +1,112 @@
+{
+  "projectType": "saas",
+  "projectName": "Gestor de Pruebas para Llamados",
+  "projectDescription": "Aplicación web que genera evaluaciones psicotécnicas completas (informe del evaluador, tabla de puntaje y hojas de trabajo) para procesos de selección de personal.",
+  "theme": "almond",
+  "primaryColor": "#6B4FBB",
+  "lightColor": "#EDE9F8",
+  "darkColor": "#3D2A7A",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guía de Uso",
+        "groups": [
+          {
+            "group": "Introducción",
+            "pages": [
+              "introduccion",
+              "conceptos-clave",
+              "pantallas"
+            ]
+          },
+          {
+            "group": "Generador de Evaluaciones",
+            "pages": [
+              "generador/armar-evaluacion",
+              "generador/guia-corrector",
+              "generador/imprimir"
+            ]
+          },
+          {
+            "group": "Panel de Administración",
+            "pages": [
+              "admin/areas-y-cargos",
+              "admin/dinamicas",
+              "admin/guardar-cambios"
+            ]
+          },
+          {
+            "group": "Asistente IA",
+            "pages": [
+              "ia/como-funciona",
+              "ia/confidencialidad",
+              "ia/incorporar-respuesta"
+            ]
+          },
+          {
+            "group": "Resolución de Problemas",
+            "pages": [
+              "soporte/problemas-frecuentes"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Referencia Técnica",
+        "groups": [
+          {
+            "group": "Arquitectura",
+            "pages": [
+              "tecnico/arquitectura",
+              "tecnico/estructura-proyecto"
+            ]
+          },
+          {
+            "group": "Modelo de Datos",
+            "pages": [
+              "tecnico/modelo-datos",
+              "tecnico/catalogo-incluido"
+            ]
+          },
+          {
+            "group": "Instalación y Despliegue",
+            "pages": [
+              "tecnico/instalacion",
+              "tecnico/variables-entorno"
+            ]
+          },
+          {
+            "group": "API del Servidor",
+            "pages": [
+              "tecnico/api-netlify",
+              "tecnico/informes-guardados"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Generación automática de informes de evaluación psicotécnica en formato A4 imprimible",
+    "Tabla de puntaje por competencias para múltiples postulantes (hasta 10)",
+    "Hojas de trabajo individuales con consigna y espacio de respuesta para cada candidato",
+    "Panel ABM para gestionar áreas, cargos y dinámicas sin conocimientos técnicos",
+    "Asistente de IA que extrae datos de bases del llamado (.docx) y genera prompts de forma local",
+    "Anonimización automática de datos sensibles antes de enviarlos a la IA",
+    "Catálogo inicial con 5 cargos y 25 dinámicas listas para usar",
+    "Guardado de informes en GitHub vía Netlify Function sin base de datos propia",
+    "Sin frameworks ni paso de build: HTML5, CSS3 y JavaScript puro"
+  ],
+  "publicApiSurface": [
+    "GET /.netlify/functions/pruebas — Cargar catálogo (áreas, cargos, dinámicas)",
+    "GET /.netlify/functions/pruebas?informes=1 — Listar informes guardados",
+    "GET /.netlify/functions/pruebas?informe=<codigo> — Leer un informe por código",
+    "POST /.netlify/functions/pruebas — Guardar catálogo actualizado",
+    "POST /.netlify/functions/pruebas (accion: guardar_informe) — Guardar un informe generado",
+    "Datos.cargar() — Carga áreas, cargos y dinámicas desde la API",
+    "Datos.guardar(base, clave) — Persiste el catálogo en GitHub",
+    "Datos.listarInformes() — Devuelve el índice de informes guardados",
+    "Datos.leerInforme(codigo) — Devuelve el informe completo por código",
+    "Datos.guardarInforme(informe, opciones) — Guarda o actualiza un informe"
+  ]
+}
